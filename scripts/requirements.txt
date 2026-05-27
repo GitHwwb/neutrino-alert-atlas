@@ -1,0 +1,4 @@
+astropy>=6.0
+beautifulsoup4>=4.12
+certifi>=2024.0
+numpy>=1.26

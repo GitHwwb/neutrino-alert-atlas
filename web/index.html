@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Neutrinos Through Your Area</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Neutrinos through your area</h1>
+    <p class="lede">
+      Which IceCube astrophysical neutrinos traveled past you on their way to the
+      South Pole detector? Each event below is a real high-energy neutrino with a
+      reconstructed sky direction. We trace the straight line from source to
+      detector and ask: how close did that line pass to you?
+    </p>
+  </header>
+
+  <section id="controls">
+    <div class="row">
+      <label>
+        Latitude
+        <input id="lat" type="number" step="any" placeholder="40.7128">
+      </label>
+      <label>
+        Longitude
+        <input id="lon" type="number" step="any" placeholder="-74.0060">
+      </label>
+      <button id="useGps" type="button">Use my location</button>
+      <button id="go" type="button">Find neutrinos</button>
+      <button id="resetView" type="button" class="secondary">Reset map</button>
+    </div>
+    <div id="status" class="status"></div>
+  </section>
+
+  <section id="map-section">
+    <div id="map"></div>
+  </section>
+
+  <section id="details" hidden>
+    <button id="closeDetails" type="button" aria-label="Close">×</button>
+    <h2 id="detailsTitle"></h2>
+    <dl id="detailsBody" class="kv"></dl>
+    <div id="detailsLinks" class="links"></div>
+    <div id="aladinWrap" hidden>
+      <button id="loadAladin" type="button">Load sky view (Aladin Lite)</button>
+      <button id="hideAladin" type="button" class="secondary" hidden>Hide sky view</button>
+      <div id="aladin-lite-div"></div>
+    </div>
+  </section>
+
+  <section id="results-section" hidden>
+    <h2 id="results-summary"></h2>
+    <ol id="results"></ol>
+  </section>
+
+  <section id="about">
+    <h2>How this works (and what it doesn't claim)</h2>
+    <p class="legend">
+      <span class="dot filled"></span> Up-going event: marker at atmospheric entry point (neutrino traversed Earth to IceCube).
+      <br>
+      <span class="dot ring"></span> Down-going event: marker at the sub-source point (source was overhead here at event time; no Earth traversal).
+    </p>
+    <ul>
+      <li>
+        These are <strong>~50 events per year, globally</strong>: IceCube's
+        public Gold and Bronze alerts of likely-astrophysical TeV–PeV neutrinos.
+        Not "neutrinos near you" in any per-location sense.
+      </li>
+      <li>
+        "Passed through your area" is a <strong>geometric reconstruction</strong>:
+        the perpendicular distance from your location to the straight line
+        between the inferred source direction and the detector. It's not a
+        measurement at your location.
+      </li>
+      <li>
+        Direction errors (typically &lt;1° for tracks, larger for cascades) make
+        the trajectory a corridor, not a thin line. Distances under a few hundred
+        km are inside the uncertainty for cascade-type events.
+      </li>
+      <li>
+        IceCube only sees TeV–PeV astrophysical neutrinos. The ~10<sup>14</sup>
+        solar and atmospheric neutrinos passing through every cm² of you per
+        second are real but not in this dataset.
+      </li>
+    </ul>
+    <p>
+      Data: <a href="https://gcn.gsfc.nasa.gov/amon_icecube_gold_bronze_events.html"
+              target="_blank" rel="noopener">GCN AMON IceCube Gold/Bronze events</a>.
+      Updated periodically.
+    </p>
+  </section>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="app.js"></script>
+</body>
+</html>
