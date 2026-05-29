@@ -546,24 +546,29 @@ button.secondary:hover { background: var(--panel-2); color: var(--ink); }
 .bmc-link {
   display: inline-flex;
   align-items: center;
-  gap: .5rem;
-  padding: .42rem .9rem;
-  border: 1px solid var(--border-strong);
+  gap: 8px;
+  padding: 5px 12px;
   border-radius: 999px;
+  border: 1px solid rgba(245, 207, 78, .4);
   background: rgba(255, 255, 255, .02);
-  color: var(--muted-strong);
+  color: var(--ink);
   font-family: var(--mono);
   font-size: .8rem;
-  letter-spacing: .01em;
+  font-weight: 400;
+  letter-spacing: 0;
   text-decoration: none;
-  transition: color .18s ease, border-color .18s ease, background .18s ease;
+  transition: all .18s ease;
 }
 .bmc-link:hover {
   color: var(--gold);
   border-color: rgba(245, 207, 78, .4);
   background: rgba(245, 207, 78, .06);
 }
-.bmc-link .bmc-emoji { font-size: .95rem; }
+.bmc-link .bmc-icon { width: 15px; height: 15px; display: block; flex: none; }
+.bmc-chip {
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+  background: #f4ecd8; border-radius: 50%; padding: 3px;
+}
 @media (max-width: 560px) {
   #site-footer { justify-content: center; text-align: center; }
 }
