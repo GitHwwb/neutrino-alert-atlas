@@ -1,11 +1,10 @@
 # Astrophysical Neutrino Alert Atlas — project guide
 
 Static site visualizing public astrophysical neutrino alerts on a Leaflet world
-map. The user enters an observer location; each event's reconstructed sky
-direction is back-projected through Earth to an atmospheric entry point, and the
+map. You enter an observer location; each event's reconstructed sky direction is
+back-projected through Earth to an atmospheric entry point, and the
 closest-approach distance from the line-of-sight to the observer is computed.
-Independent editorial/scientific project — **not affiliated with any
-experimental collaboration** (keep that framing).
+Independent project — not affiliated with any experimental collaboration.
 
 ## Run it
 
@@ -31,6 +30,7 @@ web/
   index.html  app.js  style.css
   data/  events.json + agm2015_{all,reactor,geological}.png
 .github/workflows/update-events.yml   # cron, every 3h, re-runs fetch_events.py
+.github/workflows/pages.yml           # deploys web/ to GitHub Pages on push to main
 ```
 
 ## Stack
@@ -61,47 +61,12 @@ clean Web Mercator bounds `[[-85.0511,-180],[85.0511,180]]` in `ensureAgmLayer()
 in `app.js`. The colorbar + `10^x` labels are composited over the eastern
 Pacific and kept visible by design.
 
-## Verified working — don't refactor without reason
+## Notes
 
-- Geometry math (verified vs NYC observer, distances 8000–11500 km, sensible)
-- GCN scraping + highest-revision dedup
-- SIMBAD lookup with caching + Aladin Lite embed
-- AGM overlay alignment (coastline QA + in-browser checks confirm registration)
-- Map constraints, timeline play, filters, reset, mobile responsive to 320px
-
-## Session notes (2026-05-29) — UNCOMMITTED
-
-The repo has a single "Initial commit" on `main`; **everything below plus the
-prior session's work is uncommitted in the working tree.** Nothing is pushed.
-Commit/push only when the user asks; if you do, branch off `main` first.
-
-This session fixed three things (all verified in-browser via the Chrome MCP):
-
-1. **Down-going selection clutter** (`web/style.css`). A selected down-going
-   used to stack a dot+halo reticle inside the large ~600 km highlight ring
-   (`drawTrajectory()`). Now: selected up-going = small dot + halo; selected
-   down-going **hides its marker glyph** so the 600 km ring is the only
-   indicator (one clean ring, no central dot). Deselect restores the 13px
-   hollow ring. Also removed a dead, unstyled `.sub-pin` divIcon from
-   `drawTrajectory()` in `app.js`.
-
-2. **AGM2015 overlay was skewed right.** Root cause: a bad heuristic crop + a
-   `+217.6°` east-bound fudge. Replaced with the proper `build_agm_layers.py`
-   and clean `±180` bounds (see AGM section above). `requirements.txt` gained
-   `pillow`; `.gitignore` gained `scripts/agm_src/`; the AGM explainer in
-   `index.html` was updated.
-
-3. **No auto-scroll on event click.** Removed `els.details.scrollIntoView(...)`
-   in `showDetails()` (`app.js`). Clicking an event (marker OR list item)
-   reveals the details panel but keeps the viewport on the map. **Don't
-   reintroduce the scroll.**
-
-## Accumulated user preferences
-
-- Real, published data over homemade extrapolation (they rejected a synthesized
-  reactor heatmap; AGM2015 is the real dataset).
-- Scientific/editorial aesthetic, not "AI slop": avoid Inter/Roboto/Arial,
-  avoid uniform rounded corners, avoid purple, vary type/color intentionally.
+- Geometry verified against an NYC observer (distances 8000–11500 km, sensible).
+- GCN scraping keeps the highest-revision row per event.
+- SIMBAD lookups are cached; the details panel embeds Aladin Lite.
+- AGM overlay registration confirmed via the `--debug` coastline QA pass.
 - Markers are uniform-sized; signalness is encoded by color intensity, not size.
-- Figma plugin work is paused — the `figma:*` skills load but their MCP tools
-  aren't reachable from Claude Code (they live in the Desktop app's MCP context).
+- Map constraints, timeline playback, filters, and reset are wired in `app.js`;
+  layout is responsive down to 320px.
