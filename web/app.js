@@ -16,7 +16,6 @@ const els = {
   resultsSummary: document.getElementById("results-summary"),
   searchInput: document.getElementById("searchInput"),
   sortBy: document.getElementById("sortBy"),
-  fitMap: document.getElementById("fitMap"),
   filterPills: document.querySelectorAll(".pill[data-filter]"),
   timeline: document.getElementById("timeline"),
   timelineLabel: document.getElementById("timelineLabel"),
@@ -415,23 +414,6 @@ function renderResults(ranked) {
     });
     els.results.appendChild(li);
   }
-}
-
-function fitMapToResults() {
-  const bounds = map.getBounds();
-  const filtered = state.events.filter(passesFilters);
-  // If we're already showing everything filtered, fit to all of them globally;
-  // otherwise we'd just be re-fitting to the current viewport.
-  const target = filtered.length ? filtered : state.events;
-  const pts = [];
-  for (const e of target) {
-    const [lat, lon] = markerLatLon(e);
-    if (Number.isFinite(lat) && Number.isFinite(lon)) pts.push([lat, lon]);
-  }
-  if (state.observer) pts.push([state.observer.lat, state.observer.lon]);
-  if (pts.length === 0) return;
-  if (pts.length === 1) { map.setView(pts[0], 5); return; }
-  map.fitBounds(L.latLngBounds(pts), { padding: [30, 30], maxZoom: 6 });
 }
 
 // --- Selection & details ---
@@ -864,7 +846,6 @@ els.sortBy.addEventListener("change", () => {
   state.sortBy = els.sortBy.value;
   updateList();
 });
-els.fitMap.addEventListener("click", fitMapToResults);
 
 // Timeline
 els.timeline.addEventListener("input", () => {

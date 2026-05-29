@@ -50,6 +50,21 @@ body {
   font-variant-numeric: oldstyle-nums proportional-nums slashed-zero;
 }
 
+/* Branded text selection — a cool cyan wash instead of the OS default. */
+::selection { background: rgba(121, 209, 255, .26); color: #fff; }
+
+/* Inline prose links: a restrained underline that sits off the baseline and
+   warms to full accent on hover (the .links/button-style links opt out). */
+.lede a, .explainer a, .caveats a, .source a {
+  text-decoration-color: rgba(121, 209, 255, .4);
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  transition: text-decoration-color .15s ease;
+}
+.lede a:hover, .explainer a:hover, .caveats a:hover, .source a:hover {
+  text-decoration-color: var(--accent);
+}
+
 /* --- Page-load staggered reveal --- */
 @keyframes rise {
   from { opacity: 0; transform: translateY(10px); }
@@ -63,6 +78,8 @@ header       { animation: rise .65s cubic-bezier(.2,.7,.2,1) both; }
 #about       { animation: rise .55s cubic-bezier(.2,.7,.2,1) .34s both; }
 @media (prefers-reduced-motion: reduce) {
   header, #controls, #map-controls, #map-section, #results-section, #about { animation: none; }
+  /* Keep the hover affordance but drop its motion (snaps instead of scaling). */
+  .ev, .ev::after { transition: none; }
 }
 
 header, section {
@@ -128,13 +145,29 @@ input[type=number], input[type=search], select {
   padding: .55rem .7rem; font-size: .94rem;
   font-family: inherit; transition: border-color .15s, background .15s;
 }
-input[type=number] { width: 9.5rem; font-variant-numeric: tabular-nums; }
+input[type=number] {
+  width: 9.5rem; font-variant-numeric: tabular-nums;
+  /* Coordinates are free-entry; the up/down spinners just add chrome. */
+  appearance: textfield; -moz-appearance: textfield;
+}
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 input[type=search] { width: 16rem; }
 input::placeholder { color: var(--muted); }
 input:hover, select:hover { border-color: var(--border-strong); }
 input:focus, select:focus, button:focus-visible {
   outline: none; border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(121,209,255,.14);
+}
+
+/* Replace the native dropdown arrow (low-contrast on dark) with a muted
+   chevron that matches the small-caps label palette. */
+select {
+  appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'><path d='M1 1.5 5 5.5 9 1.5' fill='none' stroke='%238b93a5' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right .6rem center;
+  padding-right: 1.7rem;
 }
 button {
   background: var(--panel-2); color: var(--ink); border: 1px solid var(--border);
@@ -171,12 +204,17 @@ button.secondary:hover { background: var(--panel-2); color: var(--ink); }
 .pill.on[data-filter="bronze"] { color: var(--bronze); border-color: rgba(211,145,84,.4); }
 .pill.on[data-filter="km3net"] { color: var(--km3); border-color: rgba(121,209,255,.4); }
 .pill.on[data-layer="agm"] { color: #fda4af; border-color: rgba(244,63,94,.45); background: rgba(244,63,94,.06); }
+/* The pill is all-small-caps, which would render Greek ν as capital Ν (an
+   "N" shape). Opt the antineutrino symbol out so it stays a lowercase nu-bar. */
+.pill .nu { font-variant-caps: normal; }
 
 .layer-sub {
-  background: var(--panel); color: var(--ink-dim);
+  /* background-color (not the shorthand) so it doesn't wipe the select caret. */
+  background-color: var(--panel); color: var(--ink-dim);
   border: 1px solid var(--border); border-radius: 4px;
-  padding: .2rem .5rem; font-size: .76rem; font-family: inherit;
+  padding: .2rem 1.3rem .2rem .5rem; font-size: .76rem; font-family: inherit;
   font-variant-caps: all-small-caps; letter-spacing: .015em;
+  background-position: right .4rem center;
 }
 .layer-sub:hover { border-color: var(--border-strong); }
 

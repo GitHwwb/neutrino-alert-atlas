@@ -53,7 +53,7 @@
       <button class="pill on" data-filter="up">up-going</button>
       <button class="pill on" data-filter="down">down-going</button>
       <span class="sep"></span>
-      <button class="pill" data-layer="agm" title="AGM2015 antineutrino global map — MeV-range flux. Different physics regime from the TeV/PeV events on this map.">AGM2015 ν̄ flux</button>
+      <button class="pill" data-layer="agm" title="AGM2015 antineutrino global map — MeV-range flux. Different physics regime from the TeV/PeV events on this map.">AGM2015 <span class="nu">ν̄</span> flux</button>
       <select id="agmChannel" class="layer-sub" hidden>
         <option value="all">total flux</option>
         <option value="reactor">reactor only</option>
@@ -105,7 +105,6 @@
             <option value="far">Lowest false-alarm rate</option>
           </select>
         </label>
-        <button id="fitMap" type="button" class="secondary">Fit map to results</button>
       </div>
     </div>
     <ol id="results"></ol>
@@ -125,44 +124,6 @@
       &nbsp; (left = low signalness, right = high signalness).
       Cyan detector pins on the map mark the operating high-energy neutrino telescopes worldwide.
     </p>
-
-    <details class="explainer">
-      <summary>What's the "AGM2015 ν̄ flux" overlay?</summary>
-      <p>
-        Toggling this overlays the actual <strong>AGM2015 antineutrino global
-        map</strong> from Usman, Jocher, Dye, McDonough &amp; Learned
-        (Sci. Rep. 5, 13945, 2015) — an experimentally informed model of
-        Earth's surface antineutrino flux over the 0–11 MeV band. The bright
-        blue regions are dominated by reactor flux; the surrounding warmer
-        gradient is the geoneutrino contribution from U/Th decay in the
-        continental crust and mantle. The channel selector switches between
-        the total, reactor-only, and geological-only renderings.
-      </p>
-      <p>
-        This is the <em>real</em> AGM2015 imagery from the authors' code
-        repository, not a derivation. The dropdown lets you isolate the
-        reactor component (hotspots over nuclear-dense regions) from the
-        geological component (broad continental gradient — note the "dark
-        patches" around mountain ranges where the crust is thick).
-      </p>
-      <p>
-        Important: this is a totally different physical regime from the
-        TeV–PeV astrophysical events on this map. The reactor and geoneutrino
-        antineutrinos are ~10<sup>9</sup>–10<sup>12</sup> times lower in
-        energy and come from terrestrial sources, not cosmic ones. The
-        overlay is shown only as geographic context — "where on Earth is
-        antineutrino production strongest, regardless of energy."
-      </p>
-      <p class="source">
-        Imagery: <a href="https://github.com/ultralytics/agm2015"
-        target="_blank" rel="noopener">github.com/ultralytics/agm2015</a>
-        (AGPL-3.0). The published equirectangular figures are cropped to the
-        map rectangle and reprojected to Web Mercator so they register with the
-        basemap (see <code>scripts/build_agm_layers.py</code>); the colorbar and
-        its 10<sup>x</sup> labels sit over the eastern Pacific.
-        See <a href="https://www.nature.com/articles/srep13945" target="_blank" rel="noopener">Usman et al. 2015</a> for the underlying methodology.
-      </p>
-    </details>
 
     <details class="explainer">
       <summary>Why only IceCube? What about KM3NeT and Baikal-GVD?</summary>
@@ -228,6 +189,44 @@
       </ul>
       <p>
         Gold/Bronze alerts are the ones that survive these cuts and meet thresholds for signalness and false-alarm rate, so they can be circulated to follow-up telescopes within minutes.
+      </p>
+    </details>
+
+    <details class="explainer">
+      <summary>What's the "AGM2015 ν̄ flux" overlay?</summary>
+      <p>
+        Toggling this overlays the actual <strong>AGM2015 antineutrino global
+        map</strong> from Usman, Jocher, Dye, McDonough &amp; Learned
+        (Sci. Rep. 5, 13945, 2015) — an experimentally informed model of
+        Earth's surface antineutrino flux over the 0–11 MeV band. The bright
+        blue regions are dominated by reactor flux; the surrounding warmer
+        gradient is the geoneutrino contribution from U/Th decay in the
+        continental crust and mantle. The channel selector switches between
+        the total, reactor-only, and geological-only renderings.
+      </p>
+      <p>
+        This is the <em>real</em> AGM2015 imagery from the authors' code
+        repository, not a derivation. The dropdown lets you isolate the
+        reactor component (hotspots over nuclear-dense regions) from the
+        geological component (broad continental gradient — note the "dark
+        patches" around mountain ranges where the crust is thick).
+      </p>
+      <p>
+        Important: this is a totally different physical regime from the
+        TeV–PeV astrophysical events on this map. The reactor and geoneutrino
+        antineutrinos are ~10<sup>9</sup>–10<sup>12</sup> times lower in
+        energy and come from terrestrial sources, not cosmic ones. The
+        overlay is shown only as geographic context — "where on Earth is
+        antineutrino production strongest, regardless of energy."
+      </p>
+      <p class="source">
+        Imagery: <a href="https://github.com/ultralytics/agm2015"
+        target="_blank" rel="noopener">github.com/ultralytics/agm2015</a>
+        (AGPL-3.0). The published equirectangular figures are cropped to the
+        map rectangle and reprojected to Web Mercator so they register with the
+        basemap (see <code>scripts/build_agm_layers.py</code>); the colorbar and
+        its 10<sup>x</sup> labels sit over the eastern Pacific.
+        See <a href="https://www.nature.com/articles/srep13945" target="_blank" rel="noopener">Usman et al. 2015</a> for the underlying methodology.
       </p>
     </details>
 
