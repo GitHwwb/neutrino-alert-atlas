@@ -1,8 +1,9 @@
-# Neutrinos through your area
+# Astrophysical Neutrino Alert Atlas
 
-A static site that, given a location on Earth, tells you which IceCube
-astrophysical neutrinos passed near you on their way to the South Pole
-detector — and how close they came.
+A static visualization of public astrophysical neutrino alerts from operating
+high-energy neutrino telescopes. Currently ingests IceCube Gold/Bronze alerts
+from NASA GCN plus a hand-curated entry for KM3-230213A (KM3NeT/ARCA); the
+geometry pipeline is detector-agnostic.
 
 ## How it works
 

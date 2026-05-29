@@ -3,37 +3,68 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Neutrinos Through Your Area</title>
+  <title>Astrophysical Neutrino Alert Atlas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header>
-    <h1>Neutrinos through your area</h1>
+    <div class="brand">
+      <span class="kicker">Interactive visualization · IceCube + KM3NeT · Data via NASA GCN &amp; published papers</span>
+      <h1>Astrophysical Neutrino <span class="accent">Alert Atlas</span></h1>
+    </div>
     <p class="lede">
-      Which IceCube astrophysical neutrinos traveled past you on their way to the
-      South Pole detector? Each event below is a real high-energy neutrino with a
-      reconstructed sky direction. We trace the straight line from source to
-      detector and ask: how close did that line pass to you?
+      A browseable view of public astrophysical neutrino alerts from operating
+      high-energy neutrino telescopes. Each event's reconstructed sky direction
+      is back-projected through Earth to an atmospheric entry point, with
+      optional closest-approach distance from any observer location. Catalog
+      refreshed periodically from the NASA GCN AMON feed (IceCube Gold/Bronze)
+      and hand-curated from published papers (currently KM3NeT/ARCA's
+      KM3-230213A). Independent project; not affiliated with any experimental
+      collaboration.
     </p>
   </header>
 
   <section id="controls">
     <div class="row">
       <label>
-        Latitude
+        Observer latitude
         <input id="lat" type="number" step="any" placeholder="40.7128">
       </label>
       <label>
-        Longitude
+        Observer longitude
         <input id="lon" type="number" step="any" placeholder="-74.0060">
       </label>
       <button id="useGps" type="button">Use my location</button>
-      <button id="go" type="button">Find neutrinos</button>
       <button id="resetView" type="button" class="secondary">Reset map</button>
     </div>
     <div id="status" class="status"></div>
+  </section>
+
+  <section id="map-controls">
+    <div class="pill-row">
+      <button class="pill on" data-filter="gold">GOLD</button>
+      <button class="pill on" data-filter="bronze">BRONZE</button>
+      <button class="pill on" data-filter="km3net">KM3NET</button>
+      <span class="sep"></span>
+      <button class="pill on" data-filter="up">up-going</button>
+      <button class="pill on" data-filter="down">down-going</button>
+      <span class="sep"></span>
+      <button class="pill" data-layer="agm" title="AGM2015 antineutrino global map — MeV-range flux. Different physics regime from the TeV/PeV events on this map.">AGM2015 ν̄ flux</button>
+      <select id="agmChannel" class="layer-sub" hidden>
+        <option value="all">total flux</option>
+        <option value="reactor">reactor only</option>
+        <option value="geological">geo only (U + Th)</option>
+      </select>
+    </div>
+    <div class="timeline-row">
+      <button id="playBtn" type="button" class="play-btn" aria-label="Play"><span class="icon">▶</span></button>
+      <input id="timeline" type="range" min="0" max="1000" value="1000" step="1">
+      <span id="timelineLabel" class="meta">all events</span>
+    </div>
   </section>
 
   <section id="map-section">
@@ -44,6 +75,11 @@
     <button id="closeDetails" type="button" aria-label="Close">×</button>
     <h2 id="detailsTitle"></h2>
     <dl id="detailsBody" class="kv"></dl>
+    <div id="simbadWrap" hidden>
+      <h3 class="subhead">Source candidates within 90% error region</h3>
+      <ul id="simbadList" class="simbad"></ul>
+      <p id="simbadEmpty" class="meta" hidden>No SIMBAD objects within the error radius.</p>
+    </div>
     <div id="detailsLinks" class="links"></div>
     <div id="aladinWrap" hidden>
       <button id="loadAladin" type="button">Load sky view (Aladin Lite)</button>
@@ -53,49 +89,184 @@
   </section>
 
   <section id="results-section" hidden>
-    <h2 id="results-summary"></h2>
+    <div class="results-bar">
+      <div class="results-meta">
+        <h2 id="results-summary"></h2>
+      </div>
+      <div class="results-controls">
+        <input id="searchInput" type="search" placeholder="Search by ID, RA, or comment…" autocomplete="off">
+        <label class="sort-label">
+          Sort
+          <select id="sortBy">
+            <option value="date">Most recent</option>
+            <option value="distance">Closest to observer</option>
+            <option value="signalness">Highest signalness</option>
+            <option value="energy">Highest energy</option>
+            <option value="far">Lowest false-alarm rate</option>
+          </select>
+        </label>
+        <button id="fitMap" type="button" class="secondary">Fit map to results</button>
+      </div>
+    </div>
     <ol id="results"></ol>
   </section>
 
   <section id="about">
-    <h2>How this works (and what it doesn't claim)</h2>
+    <h2>Methods &amp; caveats</h2>
     <p class="legend">
-      <span class="dot filled"></span> Up-going event: marker at atmospheric entry point (neutrino traversed Earth to IceCube).
+      <span class="dot filled"></span> <strong>Up-going event</strong> — filled dot at the atmospheric entry point on Earth's surface (the neutrino's straight-line path traversed Earth to reach IceCube).
       <br>
-      <span class="dot ring"></span> Down-going event: marker at the sub-source point (source was overhead here at event time; no Earth traversal).
+      <span class="dot ring"></span> <strong>Down-going event</strong> — hollow ring at the sub-source point (source was at zenith here at event time; the neutrino did not traverse Earth's interior).
+      <br>
+      Marker color intensity encodes <strong>signalness</strong>, the alert pipeline's estimated probability the event is astrophysical:
+      <span class="grad-strip gold"></span> Gold &nbsp;·&nbsp;
+      <span class="grad-strip bronze"></span> Bronze &nbsp;·&nbsp;
+      <span class="grad-strip km3net"></span> KM3NeT
+      &nbsp; (left = low signalness, right = high signalness).
+      Cyan detector pins on the map mark the operating high-energy neutrino telescopes worldwide.
     </p>
-    <ul>
+
+    <details class="explainer">
+      <summary>What's the "AGM2015 ν̄ flux" overlay?</summary>
+      <p>
+        Toggling this overlays the actual <strong>AGM2015 antineutrino global
+        map</strong> from Usman, Jocher, Dye, McDonough &amp; Learned
+        (Sci. Rep. 5, 13945, 2015) — an experimentally informed model of
+        Earth's surface antineutrino flux over the 0–11 MeV band. The bright
+        blue regions are dominated by reactor flux; the surrounding warmer
+        gradient is the geoneutrino contribution from U/Th decay in the
+        continental crust and mantle. The channel selector switches between
+        the total, reactor-only, and geological-only renderings.
+      </p>
+      <p>
+        This is the <em>real</em> AGM2015 imagery from the authors' code
+        repository, not a derivation. The dropdown lets you isolate the
+        reactor component (hotspots over nuclear-dense regions) from the
+        geological component (broad continental gradient — note the "dark
+        patches" around mountain ranges where the crust is thick).
+      </p>
+      <p>
+        Important: this is a totally different physical regime from the
+        TeV–PeV astrophysical events on this map. The reactor and geoneutrino
+        antineutrinos are ~10<sup>9</sup>–10<sup>12</sup> times lower in
+        energy and come from terrestrial sources, not cosmic ones. The
+        overlay is shown only as geographic context — "where on Earth is
+        antineutrino production strongest, regardless of energy."
+      </p>
+      <p class="source">
+        Imagery: <a href="https://github.com/ultralytics/agm2015"
+        target="_blank" rel="noopener">github.com/ultralytics/agm2015</a>
+        (AGPL-3.0). The published equirectangular figures are cropped to the
+        map rectangle and reprojected to Web Mercator so they register with the
+        basemap (see <code>scripts/build_agm_layers.py</code>); the colorbar and
+        its 10<sup>x</sup> labels sit over the eastern Pacific.
+        See <a href="https://www.nature.com/articles/srep13945" target="_blank" rel="noopener">Usman et al. 2015</a> for the underlying methodology.
+      </p>
+    </details>
+
+    <details class="explainer">
+      <summary>Why only IceCube? What about KM3NeT and Baikal-GVD?</summary>
+      <p>
+        Four operating high-energy neutrino telescopes are marked on the map:
+        IceCube at the South Pole, KM3NeT/ARCA and KM3NeT/ORCA in the
+        Mediterranean (off Sicily and Toulon), and Baikal-GVD in Russia's
+        Lake Baikal.
+      </p>
+      <p>
+        Of these, only IceCube currently publishes a structured public alert
+        catalog. Its Gold and Bronze alerts go to the NASA GCN AMON feed as a
+        machine-readable table updated within minutes of detection — that's
+        the source this Atlas ingests.
+      </p>
+      <p>
+        <strong>KM3NeT</strong> is still in phased deployment (~28 of 230
+        planned detection units installed for ARCA as of 2025) and has issued
+        only a handful of GCN circulars to date, mostly upper-limit follow-ups
+        to LIGO and GRB events. The collaboration announced a single
+        ~220&nbsp;PeV event (KM3-230213A, detected Feb 2023) via a Nature paper
+        in February 2025 — the highest-energy neutrino ever observed — but
+        that was a one-off, not part of a routine real-time alert stream.
+        <strong>Baikal-GVD</strong> publishes some events through GCN
+        circulars but does not have a parsable catalog.
+      </p>
+      <p>
+        So ingesting other detectors today would mean parsing free-text
+        circulars (low yield, high effort) or hand-curating from peer-reviewed
+        papers. When KM3NeT or Baikal-GVD register a structured GCN Notice
+        schema, they'll be much easier to add — the geometry pipeline here is
+        detector-agnostic.
+      </p>
+    </details>
+
+    <details class="explainer">
+      <summary>Why do most entry points cluster in the southern hemisphere?</summary>
+      <p>
+        An up-going neutrino's atmospheric entry latitude is a deterministic function of the source declination:
+        <code class="formula">entry_lat = arcsin(2·sin²(δ) − 1)</code>.
+        So δ = 0° maps to the south pole, δ = 45° maps to the equator, δ = 90° maps to the north pole.
+      </p>
+      <p>
+        The IceCube alert population skews to low-to-mid northern declinations (≈ 0°–30°) because two effects compete: sources at <em>negative</em> declination appear down-going at the South Pole and don't enter the up-going filter; sources at high <em>positive</em> declination require the neutrino to cross more of Earth's diameter, where absorption at PeV energies cuts the effective area. The sweet spot for through-Earth detection is near the celestial equator. Mapped back through the geometry, that puts the entry points between roughly −90° and −30° latitude.
+      </p>
+    </details>
+
+    <details class="explainer">
+      <summary>How does IceCube tell a down-going neutrino from cosmic-ray background?</summary>
+      <p>
+        IceCube is a cubic kilometer of Antarctic ice instrumented with 5,160 light sensors. When a neutrino interacts with a molecule in the ice it produces a charged particle (a muon, electron, or tau) that travels faster than light moves through ice, creating a faint blue Cherenkov glow. The sensors time those photons; from that pattern, IceCube reconstructs the particle's track and energy.
+      </p>
+      <p>
+        <strong>Up-going events are easy.</strong> If something is moving upward through the detector it had to come from below — through the entire Earth. Earth absorbs essentially everything except neutrinos. So any high-energy track going up is almost certainly a neutrino.
+      </p>
+      <p>
+        <strong>Down-going events are hard.</strong> Cosmic rays slam into the upper atmosphere above Antarctica all the time, producing a constant rain of muons that look superficially similar to neutrino tracks. IceCube separates the rare down-going astrophysical neutrinos from this huge background by:
+      </p>
+      <ul>
+        <li><strong>Vetoing the outer ice.</strong> If a track enters from outside the detector, it's probably a cosmic-ray muon — only those come from outside. Real neutrinos can interact anywhere, so the interesting candidates are tracks that <em>start</em> inside the instrumented volume.</li>
+        <li><strong>Looking at energy.</strong> Atmospheric muons mostly arrive at modest energies; astrophysical neutrinos in this catalog are at TeV–PeV, where the background falls off sharply.</li>
+        <li><strong>Looking at shape.</strong> Electron- and tau-flavor neutrinos produce roughly spherical "cascade" light patterns, which are very different from the long straight tracks made by atmospheric muons.</li>
+      </ul>
+      <p>
+        Gold/Bronze alerts are the ones that survive these cuts and meet thresholds for signalness and false-alarm rate, so they can be circulated to follow-up telescopes within minutes.
+      </p>
+    </details>
+
+    <ul class="caveats">
       <li>
-        These are <strong>~50 events per year, globally</strong>: IceCube's
-        public Gold and Bronze alerts of likely-astrophysical TeV–PeV neutrinos.
-        Not "neutrinos near you" in any per-location sense.
+        Catalog scope: <strong>≈ 50 events / year, globally</strong> — public Gold and Bronze alerts of likely-astrophysical TeV–PeV neutrinos. This is not a per-location detection rate.
       </li>
       <li>
-        "Passed through your area" is a <strong>geometric reconstruction</strong>:
-        the perpendicular distance from your location to the straight line
-        between the inferred source direction and the detector. It's not a
-        measurement at your location.
+        Closest-approach distance is a <strong>geometric reconstruction</strong>: the perpendicular distance from the observer's ECEF position to the line connecting the reconstructed source direction and the detector. It is not a measurement at the observer's location.
       </li>
       <li>
-        Direction errors (typically &lt;1° for tracks, larger for cascades) make
-        the trajectory a corridor, not a thin line. Distances under a few hundred
-        km are inside the uncertainty for cascade-type events.
+        Direction uncertainty (typically &lt; 1° for track-like events, &gt; 5° for cascades) means the trajectory is a corridor, not a line. Closest-approach values smaller than a few hundred kilometers are inside the cascade uncertainty.
       </li>
       <li>
-        IceCube only sees TeV–PeV astrophysical neutrinos. The ~10<sup>14</sup>
-        solar and atmospheric neutrinos passing through every cm² of you per
-        second are real but not in this dataset.
+        IceCube is sensitive to TeV–PeV astrophysical neutrinos. The ~10<sup>14</sup> solar and atmospheric neutrinos per cm² per second traversing every observer are real but lie outside this catalog.
       </li>
     </ul>
-    <p>
-      Data: <a href="https://gcn.gsfc.nasa.gov/amon_icecube_gold_bronze_events.html"
+    <p class="source">
+      Source: <a href="https://gcn.gsfc.nasa.gov/amon_icecube_gold_bronze_events.html"
               target="_blank" rel="noopener">GCN AMON IceCube Gold/Bronze events</a>.
-      Updated periodically.
+      Position errors are statistical; systematic uncertainties may apply per-event. Catalog refreshed periodically by automated build.
     </p>
   </section>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
           integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="app.js"></script>
+  <script>
+    // Cache-bust app.js + style.css per page load. Static assets are tiny;
+    // this trades a few KB for "what you see is the latest commit."
+    (() => {
+      const v = Date.now();
+      document.head.insertAdjacentHTML(
+        "beforeend",
+        `<link rel="stylesheet" href="style.css?v=${v}">`,
+      );
+      const s = document.createElement("script");
+      s.src = `app.js?v=${v}`;
+      document.body.appendChild(s);
+    })();
+  </script>
 </body>
 </html>

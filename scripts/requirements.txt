@@ -1,4 +1,6 @@
 astropy>=6.0
+astroquery>=0.4.7
 beautifulsoup4>=4.12
 certifi>=2024.0
 numpy>=1.26
+pillow>=10.0

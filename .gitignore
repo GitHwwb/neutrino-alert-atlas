@@ -2,3 +2,7 @@
 __pycache__/
 *.pyc
 .DS_Store
+
+# Cached AGM2015 source figures + coastline data + QA renders (re-fetched by
+# scripts/build_agm_layers.py on demand; the built overlays live in web/data/).
+scripts/agm_src/

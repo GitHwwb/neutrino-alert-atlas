@@ -29,17 +29,17 @@ jobs:
       - name: Install deps
         run: pip install -r scripts/requirements.txt
 
-      - name: Fetch and precompute
+      - name: Fetch events and precompute
         run: python scripts/fetch_events.py
 
       - name: Commit if changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if git diff --quiet web/data/events.json; then
-            echo "No changes to events.json."
+          git add web/data/events.json
+          if git diff --cached --quiet; then
+            echo "No data changes."
           else
-            git add web/data/events.json
             git commit -m "Update events.json ($(date -u +%Y-%m-%dT%H:%MZ))"
             git push
           fi
