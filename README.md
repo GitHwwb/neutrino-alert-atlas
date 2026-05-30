@@ -70,5 +70,24 @@ a new Pages deploy automatically.
 
 ## Data attribution
 
-Events: NASA GCN/AMON IceCube Gold and Bronze alerts.
-Map tiles: OpenStreetMap.
+- Events: NASA GCN/AMON IceCube Gold and Bronze alerts; KM3-230213A from
+  Aiello et al. 2025, Nature 638:376.
+- Map tiles: © OpenStreetMap contributors, © CARTO.
+- AGM2015 antineutrino-flux overlays: derived (cropped + reprojected) from the
+  figures in [ultralytics/agm2015](https://github.com/ultralytics/agm2015)
+  (AGPL-3.0), based on Usman et al. 2015.
+
+## License
+
+Copyright © 2026 Jonathan Lopes.
+
+This project is licensed under the **GNU Affero General Public License v3.0**
+(AGPL-3.0) — see [`LICENSE`](LICENSE). AGPL-3.0 is used because the AGM2015
+flux overlays are derived from AGPL-3.0 source material (see Data attribution),
+and that copyleft obligation extends to the work as a whole. If you run a
+modified version of this site as a network service, the AGPL requires you to
+offer your users the corresponding source.
+
+Bundled/loaded third-party components keep their own licenses: Leaflet (BSD-2),
+Aladin Lite, and the Google-hosted fonts (SIL Open Font License) are loaded at
+runtime from their respective CDNs and are not redistributed here.
