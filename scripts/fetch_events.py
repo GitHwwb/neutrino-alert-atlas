@@ -85,11 +85,35 @@ class RawRow:
     comments: str
 
 
+FETCH_ATTEMPTS = 4
+FETCH_BACKOFF_S = 20.0  # doubled after each failed attempt
+
+
 def fetch_html() -> str:
+    """Fetch the GCN table, retrying on transient network failures.
+
+    GitHub-hosted runners intermittently lose the route to gcn.gsfc.nasa.gov
+    ("[Errno 101] Network is unreachable"), so a single attempt fails runs
+    that would succeed a minute later.
+    """
     req = Request(GCN_URL, headers={"User-Agent": "icecube-tracker/0.1 (+github)"})
     ctx = ssl.create_default_context(cafile=certifi.where())
-    with urlopen(req, timeout=30, context=ctx) as resp:
-        return resp.read().decode("utf-8", errors="replace")
+    delay = FETCH_BACKOFF_S
+    for attempt in range(1, FETCH_ATTEMPTS + 1):
+        try:
+            with urlopen(req, timeout=30, context=ctx) as resp:
+                return resp.read().decode("utf-8", errors="replace")
+        except OSError as exc:  # URLError subclasses OSError
+            if attempt == FETCH_ATTEMPTS:
+                raise
+            print(
+                f"Fetch attempt {attempt}/{FETCH_ATTEMPTS} failed ({exc}); "
+                f"retrying in {delay:.0f}s",
+                file=sys.stderr,
+            )
+            time.sleep(delay)
+            delay *= 2
+    raise AssertionError("unreachable")
 
 
 def parse_rows(html: str) -> list[RawRow]:
