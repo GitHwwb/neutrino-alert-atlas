@@ -148,6 +148,35 @@ function plotDetectors() {
 }
 plotDetectors();
 
+// On-map legend: decodes the marker language (dot vs ring, color = signalness)
+// where people first meet it, instead of only in Methods at the page bottom.
+// A Leaflet control gets us corner placement + click isolation for free.
+const legendControl = L.control({ position: "bottomleft" });
+legendControl.onAdd = () => {
+  const div = L.DomUtil.create("div", "map-legend");
+  // Collapsed by default on small screens where map real estate is scarce.
+  const open = window.matchMedia("(min-width: 720px)").matches ? " open" : "";
+  div.innerHTML = `
+    <details${open}>
+      <summary>Legend</summary>
+      <div class="lg-body">
+        <div class="lg-row"><span class="lg-dot"></span>up-going · Earth entry point</div>
+        <div class="lg-row"><span class="lg-ring"></span>down-going · sub-source point</div>
+        <div class="lg-row"><span class="lg-pin"></span>neutrino telescope</div>
+        <div class="lg-tiers">
+          <span class="lg-tier"><i class="lg-strip gold"></i>Gold</span>
+          <span class="lg-tier"><i class="lg-strip bronze"></i>Bronze</span>
+          <span class="lg-tier"><i class="lg-strip km3"></i>KM3NeT</span>
+        </div>
+        <div class="lg-hint">muted → vivid = signalness</div>
+      </div>
+    </details>`;
+  L.DomEvent.disableClickPropagation(div);
+  L.DomEvent.disableScrollPropagation(div);
+  return div;
+};
+legendControl.addTo(map);
+
 // --- Math ---
 function latLonToECEF(latDeg, lonDeg, radiusKm = EARTH_RADIUS_KM) {
   const lat = (latDeg * Math.PI) / 180;
@@ -184,6 +213,14 @@ function shortDate(iso) { return iso.slice(0, 10); }
 function formatDistance(km) {
   if (km < 1000) return `${km.toFixed(0)} km`;
   return `${(km / 1000).toFixed(2)} × 10³ km`;
+}
+// Energies are TeV throughout (the GCN table's unit; hand-curated events are
+// normalized to TeV in the pipeline). Roll over to PeV/EeV for readability.
+function formatEnergy(tev) {
+  if (!Number.isFinite(tev)) return "—";
+  if (tev >= 1e6) return `${(tev / 1e6).toPrecision(3)} EeV`;
+  if (tev >= 1e3) return `${(tev / 1e3).toPrecision(3)} PeV`;
+  return `${tev.toPrecision(3)} TeV`;
 }
 
 // --- Marker helpers ---
@@ -244,7 +281,8 @@ function buildMarker(e) {
     { direction: "top", offset: [0, -12] },
   );
   m.on("click", () => focusEvent(e.id));
-  return { marker: m, halo: null };
+  // Keep the event on the entry so filter passes don't need an O(n) lookup.
+  return { marker: m, halo: null, event: e };
 }
 
 // --- Filtering ---
@@ -265,10 +303,11 @@ function passesFilters(e) {
   return true;
 }
 
-function applyFilters() {
-  for (const [id, entry] of state.eventMarkers) {
-    const e = state.events.find((x) => x.id === id);
-    const show = passesFilters(e);
+// updateListAfter=false lets timeline playback refresh markers every tick
+// while deferring the (DOM-heavy) list rebuild to a slower cadence.
+function applyFilters(updateListAfter = true) {
+  for (const entry of state.eventMarkers.values()) {
+    const show = passesFilters(entry.event);
     if (show) {
       if (entry.halo && !map.hasLayer(entry.halo)) entry.halo.addTo(map);
       if (!map.hasLayer(entry.marker)) entry.marker.addTo(map);
@@ -279,10 +318,10 @@ function applyFilters() {
   }
   // If the active event was filtered out, clear it.
   if (state.activeId) {
-    const active = state.events.find((x) => x.id === state.activeId);
+    const active = state.eventMarkers.get(state.activeId)?.event;
     if (active && !passesFilters(active)) clearSelection();
   }
-  updateList();
+  if (updateListAfter) updateList();
 }
 
 // --- List rendering (events in current map bounds) ---
@@ -391,7 +430,7 @@ function renderResults(ranked) {
           RA ${e.ra_deg.toFixed(2)}° · Dec ${e.dec_deg.toFixed(2)}° ·
           σ<sub>90</sub> ${e.err90_arcmin.toFixed(0)}′ ·
           sig ${(e.signalness * 100).toFixed(0)}% ·
-          E ${e.energy.toExponential(2)} ·
+          E ${formatEnergy(e.energy)} ·
           FAR ${e.far_per_yr.toFixed(2)}/yr ·
           ${e.is_up_going ? "up-going" : "down-going"}
         </div>
@@ -523,7 +562,7 @@ function showDetails(event) {
       50% radius ${event.err50_arcmin.toFixed(1)}′
     </dd>
     <dt>Reconstructed energy</dt>
-    <dd>${event.energy.toExponential(3)} (GCN units; typically TeV for IceCube alerts)</dd>
+    <dd>${formatEnergy(event.energy)}</dd>
     <dt>Signalness</dt>
     <dd>${(event.signalness * 100).toFixed(1)}% probability of astrophysical origin</dd>
     <dt>False-alarm rate</dt>
@@ -597,6 +636,25 @@ function renderSimbad(event) {
 }
 
 function hideDetails() { els.details.hidden = true; }
+
+// --- Stat strip (header) ---
+// One editorial line of scale + recency, computed from the live payload so it
+// never drifts from the data. Relies on initTimeline() having run first.
+function renderStatStrip() {
+  const strip = document.getElementById("statStrip");
+  const detectors = [...new Set(state.events.map((e) => e.detector || "IceCube"))];
+  const items = [
+    `<strong>${state.payload.event_count}</strong> events`,
+    `${state.timelineMin.toISOString().slice(0, 4)}–${state.timelineMax.toISOString().slice(0, 4)}`,
+    detectors.join(" + "),
+    `latest alert ${state.timelineMax.toISOString().slice(0, 10)}`,
+    "refreshed every 3 h",
+  ];
+  strip.innerHTML = items
+    .map((s) => `<span class="stat">${s}</span>`)
+    .join('<span class="stat-sep" aria-hidden="true">·</span>');
+  strip.hidden = false;
+}
 
 // --- Aladin Lite (lazy) ---
 let aladinScriptPromise = null;
@@ -696,17 +754,21 @@ function setTimelineCursorFromSlider() {
     els.timelineLabel.textContent = `up to ${cursor.toISOString().slice(0, 10)}`;
   }
 }
+// Inline SVG so the glyphs render identically everywhere — the ▶/❚❚ text
+// characters fall back to emoji or mismatched metrics on some platforms.
+const ICON_PLAY = '<svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M3 1.6 10.2 6 3 10.4Z" fill="currentColor"/></svg>';
+const ICON_PAUSE = '<svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><rect x="2.4" y="1.8" width="2.6" height="8.4" rx=".8" fill="currentColor"/><rect x="7" y="1.8" width="2.6" height="8.4" rx=".8" fill="currentColor"/></svg>';
 function setPlayButtonState(playing) {
   els.playBtn.classList.toggle("playing", playing);
   els.playBtn.setAttribute("aria-label", playing ? "Pause" : "Play");
-  // Use a span we toggle so CSS can override via the .playing class
-  els.playBtn.innerHTML = `<span class="icon">${playing ? "❚❚" : "▶"}</span>`;
+  els.playBtn.innerHTML = `<span class="icon">${playing ? ICON_PAUSE : ICON_PLAY}</span>`;
 }
 function togglePlay() {
   if (state.playTimer) {
     clearInterval(state.playTimer);
     state.playTimer = null;
     setPlayButtonState(false);
+    updateList(); // sync the list with wherever playback was paused
     return;
   }
   // If at end (or anywhere ≥ 1000), restart from the beginning.
@@ -717,9 +779,13 @@ function togglePlay() {
   }
   setPlayButtonState(true);
   // ~8 seconds for a full sweep at 40ms tick (1000 / 5 = 200 ticks).
+  // Markers update every tick; the list rebuild is DOM-heavy, so it runs at
+  // ~5 Hz and once more on the final frame.
+  let tick = 0;
   state.playTimer = setInterval(() => {
     let v = parseInt(els.timeline.value, 10) + 5;
-    if (v >= 1000) {
+    const done = v >= 1000;
+    if (done) {
       v = 1000;
       clearInterval(state.playTimer);
       state.playTimer = null;
@@ -727,7 +793,9 @@ function togglePlay() {
     }
     els.timeline.value = v;
     setTimelineCursorFromSlider();
-    applyFilters();
+    applyFilters(false);
+    tick++;
+    if (done || tick % 5 === 0) updateList();
   }, 40);
 }
 
@@ -735,13 +803,15 @@ function togglePlay() {
 async function loadEvents() {
   els.status.textContent = "Loading events…";
   try {
-    // Cache-bust: the events.json may be regenerated by the cron, and stale
-    // cached copies have caused several debugging head-scratchers.
-    const res = await fetch(`${DATA_URL}?t=${Date.now()}`, { cache: "no-store" });
+    // "no-cache" (not no-store) = always revalidate against the server's ETag.
+    // Fresh data after each cron regen, but unchanged data is a ~free 304
+    // instead of a full re-download.
+    const res = await fetch(DATA_URL, { cache: "no-cache" });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     state.payload = await res.json();
     state.events = state.payload.events;
     initTimeline();
+    renderStatStrip();
     plotAllEvents();
     els.status.textContent =
       `${state.payload.event_count} events loaded ` +
@@ -880,12 +950,12 @@ map.on("click", clearSelection);
 document.addEventListener("keydown", (ev) => { if (ev.key === "Escape") clearSelection(); });
 
 // --- AGM2015 image overlay (real data from Usman et al. 2015, github.com/ultralytics/agm2015, AGPL-3.0)
-// Cache-bust so re-runs of compute_agm_layers.py are picked up immediately.
-const _v = Date.now();
+// No cache-busting: the overlays change ~never, and Pages' max-age=600 + ETag
+// keeps them fresh enough while letting repeat visits skip the download.
 const AGM_CHANNELS = {
-  all:        `data/agm2015_all.png?t=${_v}`,
-  reactor:    `data/agm2015_reactor.png?t=${_v}`,
-  geological: `data/agm2015_geological.png?t=${_v}`,
+  all:        "data/agm2015_all.webp",
+  reactor:    "data/agm2015_reactor.webp",
+  geological: "data/agm2015_geological.webp",
 };
 let agmLayer = null;
 let agmOn = false;

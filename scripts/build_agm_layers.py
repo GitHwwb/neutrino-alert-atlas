@@ -20,7 +20,7 @@ What this script does, per channel:
      Leaflet's L.imageOverlay stretches an image LINEARLY in projected space.
      The output covers the full Web Mercator world: lon -180..+180,
      lat -85.0511..+85.0511, as a square PNG.
-  4. Write web/data/agm2015_<channel>.png.
+  4. Write web/data/agm2015_<channel>.webp.
 
 The colorbar + its 10^x.y labels are composited onto the eastern Pacific
 (roughly +173..+180 lon) WITHIN the map for the 'all' / 'geological' figures,
@@ -220,15 +220,14 @@ def build(debug: bool = False, size: int = OUT_SIZE) -> None:
         print(f"  map rect: left={left} top={top} right={right} bottom={bottom}"
               f"  ({w}x{h}, ratio {w/h:.3f})")
         merc = reproject_to_mercator(crop, size)
-        out_path = os.path.join(OUT_DIR, f"agm2015_{ch}.png")
-        # The flux uses a limited (jet-like) colormap and the overlay needs no
-        # in-image transparency (the layer's CSS opacity handles blending), so
-        # an adaptive 256-colour palette PNG is visually identical but ~5x
-        # smaller than 2048^2 RGBA.
-        pal = Image.fromarray(merc[:, :, :3], "RGB").convert(
-            "P", palette=Image.ADAPTIVE, colors=256
+        out_path = os.path.join(OUT_DIR, f"agm2015_{ch}.webp")
+        # The overlay needs no in-image transparency (the layer's CSS opacity
+        # handles blending) and renders at 0.85 opacity with screen blending,
+        # so lossy WebP q90 is visually identical — and ~3x smaller than the
+        # adaptive-palette PNG this used to write (~230 KB vs ~690 KB).
+        Image.fromarray(merc[:, :, :3], "RGB").save(
+            out_path, "WEBP", quality=90, method=6
         )
-        pal.save(out_path, optimize=True)
         kb = os.path.getsize(out_path) // 1024
         print(f"  wrote {os.path.relpath(out_path)}  ({size}x{size}, {kb} KB)")
         if debug:

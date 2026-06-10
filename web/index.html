@@ -12,15 +12,39 @@
   <meta property="og:title" content="Astrophysical Neutrino Alert Atlas">
   <meta property="og:description" content="Interactive map of public astrophysical neutrino alerts from IceCube and KM3NeT — sky directions back-projected through Earth, refreshed automatically from the NASA GCN feed.">
   <meta property="og:url" content="https://githwwb.github.io/neutrino-alert-atlas/">
-  <meta name="twitter:card" content="summary">
+  <meta property="og:image" content="https://githwwb.github.io/neutrino-alert-atlas/og-card.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="World map of astrophysical neutrino alert entry points, colored by alert tier and signalness">
+  <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Astrophysical Neutrino Alert Atlas">
   <meta name="twitter:description" content="Interactive map of public astrophysical neutrino alerts from IceCube and KM3NeT, refreshed automatically from the NASA GCN feed.">
+  <meta name="twitter:image" content="https://githwwb.github.io/neutrino-alert-atlas/og-card.png">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2307090f'/%3E%3Ccircle cx='12' cy='19' r='4.5' fill='%23f5cf4e'/%3E%3Ccircle cx='21' cy='11' r='5' fill='none' stroke='%2379d1ff' stroke-width='2.5'/%3E%3C/svg%3E">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Dataset",
+    "name": "Astrophysical Neutrino Alert Atlas",
+    "description": "Public astrophysical neutrino alerts (IceCube Gold/Bronze via NASA GCN, plus hand-curated KM3NeT events) with precomputed Earth-traversal geometry: atmospheric entry points, sub-source points, and source-direction unit vectors.",
+    "url": "https://githwwb.github.io/neutrino-alert-atlas/",
+    "creator": { "@type": "Person", "name": "Jonathan Lopes" },
+    "isBasedOn": "https://gcn.gsfc.nasa.gov/amon_icecube_gold_bronze_events.html",
+    "license": "https://www.gnu.org/licenses/agpl-3.0.html",
+    "temporalCoverage": "2019-06-19/..",
+    "distribution": {
+      "@type": "DataDownload",
+      "encodingFormat": "application/json",
+      "contentUrl": "https://githwwb.github.io/neutrino-alert-atlas/data/events.json"
+    }
+  }
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header>
@@ -32,12 +56,9 @@
       A browseable view of public astrophysical neutrino alerts from operating
       high-energy neutrino telescopes. Each event's reconstructed sky direction
       is back-projected through Earth to an atmospheric entry point, with
-      optional closest-approach distance from any observer location. Catalog
-      refreshed periodically from the NASA GCN AMON feed (IceCube Gold/Bronze)
-      and hand-curated from published papers (currently KM3NeT/ARCA's
-      KM3-230213A). Independent project; not affiliated with any experimental
-      collaboration.
+      optional closest-approach distance from any observer location.
     </p>
+    <div id="statStrip" class="stat-strip" hidden></div>
   </header>
 
   <section id="controls">
@@ -73,7 +94,7 @@
       </select>
     </div>
     <div class="timeline-row">
-      <button id="playBtn" type="button" class="play-btn" aria-label="Play"><span class="icon">▶</span></button>
+      <button id="playBtn" type="button" class="play-btn" aria-label="Play"><span class="icon"><svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M3 1.6 10.2 6 3 10.4Z" fill="currentColor"/></svg></span></button>
       <input id="timeline" type="range" min="0" max="1000" value="1000" step="1" aria-label="Timeline — show events up to a date">
       <span id="timelineLabel" class="meta">all events</span>
     </div>
@@ -273,19 +294,8 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
           integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script>
-    // Cache-bust app.js + style.css per page load. Static assets are tiny;
-    // this trades a few KB for "what you see is the latest commit."
-    (() => {
-      const v = Date.now();
-      document.head.insertAdjacentHTML(
-        "beforeend",
-        `<link rel="stylesheet" href="style.css?v=${v}">`,
-      );
-      const s = document.createElement("script");
-      s.src = `app.js?v=${v}`;
-      document.body.appendChild(s);
-    })();
-  </script>
+  <!-- No cache-busting: GitHub Pages serves max-age=600 + ETag, so updates
+       propagate within 10 minutes and revalidation is a near-free 304. -->
+  <script src="app.js"></script>
 </body>
 </html>

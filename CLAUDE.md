@@ -10,8 +10,8 @@ Independent project — not affiliated with any experimental collaboration.
 
 ```bash
 # Dev server (static files in web/). Open http://localhost:8765 in Chrome
-# (Safari blocks HTTP). Cache-busting on app.js + style.css means edits show
-# up on reload without a hard refresh.
+# (Safari blocks HTTP). No cache-busting — assets rely on Pages' max-age=600
+# + ETag in prod; locally hard-refresh (Cmd+Shift+R) if an edit looks stale.
 python3 -m http.server -d web 8765
 ```
 
@@ -24,11 +24,12 @@ certifi, numpy, pillow, scipy). Use `.venv/bin/python` directly.
 scripts/
   fetch_events.py        # GCN scraper + geometry (ECEF/ITRS) + SIMBAD lookup -> web/data/events.json
   build_agm_layers.py    # builds the AGM2015 flux overlays (see below)
+  build_og_card.py       # renders web/og-card.png (social preview) from events.json
   requirements.txt
   agm_src/               # gitignored cache: source figures, coastline geojson, --debug QA renders
 web/
   index.html  app.js  style.css
-  data/  events.json + agm2015_{all,reactor,geological}.png
+  data/  events.json + agm2015_{all,reactor,geological}.webp
 .github/workflows/update-events.yml   # cron, every 3h, re-runs fetch_events.py
 .github/workflows/pages.yml           # deploys web/ to GitHub Pages on push to main
 ```
@@ -55,7 +56,7 @@ hand-curated KM3-230213A (KM3NeT/ARCA, 220 PeV, Aiello et al. 2025 Nature
 
 It downloads + caches the source `pcarree` figures, crops each to its true map
 rectangle (full-globe equirectangular, verified 2:1), reprojects
-equirectangular -> Web Mercator, and writes 2048² adaptive-palette PNGs to
+equirectangular -> Web Mercator, and writes 2048² WebP (q90) images to
 `web/data/`. Idempotent (byte-identical re-runs). The overlay is placed at the
 clean Web Mercator bounds `[[-85.0511,-180],[85.0511,180]]` in `ensureAgmLayer()`
 in `app.js`. The colorbar + `10^x` labels are composited over the eastern

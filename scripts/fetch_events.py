@@ -269,7 +269,8 @@ HAND_CURATED_EVENTS = [
         "dec_deg": -7.8,
         "err90_arcmin": 84.0,        # ~1.4° published 90% C.L. radius
         "err50_arcmin": 42.0,        # estimate (~0.7° 50% radius)
-        "energy": 2.2e8,             # ~220 PeV in GeV (best-fit muon proxy)
+        "energy": 2.2e5,             # ~220 PeV in TeV — the GCN table's unit, so
+                                     # `energy` is comparable across all events
         "signalness": 0.99,          # treated as essentially astrophysical
         "far_per_yr": 0.0001,        # extremely low FAR (single event, unique morphology)
         "comments": (
@@ -280,6 +281,19 @@ HAND_CURATED_EVENTS = [
         "reference_url": "https://www.nature.com/articles/s41586-024-08543-1",
     },
 ]
+
+
+def round_floats(obj, ndigits: int = 6):
+    """Round every float in a JSON-ready structure. 6 decimals is ~0.1 m in
+    degrees and ~6 m for unit vectors scaled to Earth radius — far below the
+    physics' angular uncertainty, and roughly halves the payload size."""
+    if isinstance(obj, float):
+        return round(obj, ndigits)
+    if isinstance(obj, list):
+        return [round_floats(x, ndigits) for x in obj]
+    if isinstance(obj, dict):
+        return {k: round_floats(v, ndigits) for k, v in obj.items()}
+    return obj
 
 
 def to_hand_curated_event_dict(entry: dict, simbad_cache: dict[str, list]) -> dict:
@@ -441,7 +455,7 @@ def main() -> int:
     }
 
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    OUTPUT.write_text(json.dumps(payload, indent=2))
+    OUTPUT.write_text(json.dumps(round_floats(payload), indent=2))
     print(f"Wrote {OUTPUT} ({len(events)} events)", file=sys.stderr)
     return 0
 
