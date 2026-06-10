@@ -170,6 +170,13 @@ function closestApproachKm(observerEcef, icecubeEcef, sourceUnit) {
 }
 
 // --- Formatting ---
+// Escape strings that originate outside this codebase (GCN comments, SIMBAD
+// names/types, event IDs) before they go through innerHTML.
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, (ch) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  }[ch]));
+}
 function formatDate(iso) {
   return new Date(iso).toISOString().replace("T", " ").replace(/\.\d+Z$/, "Z");
 }
@@ -378,7 +385,7 @@ function renderResults(ranked) {
       <span class="badge ${e.notice_type}">${e.notice_type}</span>
       <div>
         <div class="primary">
-          ${formatDate(e.datetime_utc)} · ${e.id}
+          ${formatDate(e.datetime_utc)} · ${esc(e.id)}
         </div>
         <div class="meta">
           RA ${e.ra_deg.toFixed(2)}° · Dec ${e.dec_deg.toFixed(2)}° ·
@@ -395,7 +402,13 @@ function renderResults(ranked) {
           : `<span class="label">Closest approach</span>${formatDistance(distanceKm)}`
       }</div>
     `;
+    // Rows act as buttons: reachable by Tab, activated by Enter/Space.
+    li.tabIndex = 0;
+    li.setAttribute("role", "button");
     li.addEventListener("click", () => focusEvent(e.id));
+    li.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); focusEvent(e.id); }
+    });
     els.results.appendChild(li);
   }
 
@@ -408,9 +421,15 @@ function renderResults(ranked) {
     } else {
       li.textContent = `Show all ${inView} events (${inView - PAGE_SIZE} more)`;
     }
-    li.addEventListener("click", () => {
+    li.tabIndex = 0;
+    li.setAttribute("role", "button");
+    const toggleExpand = () => {
       state.listExpanded = !state.listExpanded;
       renderResults(ranked);
+    };
+    li.addEventListener("click", toggleExpand);
+    li.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); toggleExpand(); }
     });
     els.results.appendChild(li);
   }
@@ -488,7 +507,7 @@ function showDetails(event) {
   const detectorName = event.detector || "IceCube";
   els.detailsTitle.innerHTML =
     `<span class="badge ${event.notice_type}">${event.notice_type}</span> ` +
-    `${detectorName} alert ${event.id}`;
+    `${detectorName} alert ${esc(event.id)}`;
 
   els.detailsBody.innerHTML = `
     <dt>Detector</dt>
@@ -516,7 +535,7 @@ function showDetails(event) {
         : "Down-going: arrived from above IceCube's horizon, no significant Earth traversal"
     }</dd>
     <dt>Comments</dt>
-    <dd class="wrap">${event.comments || "—"}</dd>
+    <dd class="wrap">${esc(event.comments || "—")}</dd>
   `;
 
   // SIMBAD candidates (populated server-side; field may not be present yet during
@@ -569,8 +588,8 @@ function renderSimbad(event) {
     const li = document.createElement("li");
     const simbadUrl = `https://simbad.cds.unistra.fr/simbad/sim-id?Ident=${encodeURIComponent(c.name)}`;
     li.innerHTML = `
-      <span class="name"><a href="${simbadUrl}" target="_blank" rel="noopener">${c.name}</a></span>
-      <span class="otype">${c.otype || "—"}</span>
+      <span class="name"><a href="${simbadUrl}" target="_blank" rel="noopener">${esc(c.name)}</a></span>
+      <span class="otype">${esc(c.otype || "—")}</span>
       <span class="sep">${c.sep_arcmin == null ? "" : c.sep_arcmin.toFixed(2) + "′"}</span>
     `;
     els.simbadList.appendChild(li);
@@ -771,7 +790,7 @@ function reportClosest(obs) {
   const ranked = state.events
     .filter(passesFilters)
     .map((e) => closestApproachKm(
-      latLonToECEF(obs.lat, obs.lon), state.payload.icecube_ecef_km, e.source_ecef_unit,
+      latLonToECEF(obs.lat, obs.lon), detectorAnchor(e), e.source_ecef_unit,
     ))
     .sort((a, b) => a - b);
   if (ranked.length) {
@@ -829,6 +848,7 @@ for (const pill of els.filterPills) {
     const key = pill.dataset.filter;
     state.filters[key] = !state.filters[key];
     pill.classList.toggle("on", state.filters[key]);
+    pill.setAttribute("aria-pressed", state.filters[key]);
     applyFilters();
   });
 }
@@ -903,6 +923,7 @@ function applyAgm() {
 agmPill.addEventListener("click", () => {
   agmOn = !agmOn;
   agmPill.classList.toggle("on", agmOn);
+  agmPill.setAttribute("aria-pressed", agmOn);
   applyAgm();
 });
 agmSel.addEventListener("change", () => {

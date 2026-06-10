@@ -4,6 +4,18 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Astrophysical Neutrino Alert Atlas</title>
+  <meta name="description" content="Interactive map of public astrophysical neutrino alerts from IceCube and KM3NeT. Each event's sky direction is back-projected through Earth; enter your location to see how close each neutrino's path passed to you. Updated automatically from the NASA GCN feed.">
+  <link rel="canonical" href="https://githwwb.github.io/neutrino-alert-atlas/">
+  <meta name="theme-color" content="#07090f">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Astrophysical Neutrino Alert Atlas">
+  <meta property="og:title" content="Astrophysical Neutrino Alert Atlas">
+  <meta property="og:description" content="Interactive map of public astrophysical neutrino alerts from IceCube and KM3NeT — sky directions back-projected through Earth, refreshed automatically from the NASA GCN feed.">
+  <meta property="og:url" content="https://githwwb.github.io/neutrino-alert-atlas/">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Astrophysical Neutrino Alert Atlas">
+  <meta name="twitter:description" content="Interactive map of public astrophysical neutrino alerts from IceCube and KM3NeT, refreshed automatically from the NASA GCN feed.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2307090f'/%3E%3Ccircle cx='12' cy='19' r='4.5' fill='%23f5cf4e'/%3E%3Ccircle cx='21' cy='11' r='5' fill='none' stroke='%2379d1ff' stroke-width='2.5'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap">
@@ -46,15 +58,15 @@
 
   <section id="map-controls">
     <div class="pill-row">
-      <button class="pill on" data-filter="gold">GOLD</button>
-      <button class="pill on" data-filter="bronze">BRONZE</button>
-      <button class="pill on" data-filter="km3net">KM3NET</button>
+      <button class="pill on" data-filter="gold" aria-pressed="true">GOLD</button>
+      <button class="pill on" data-filter="bronze" aria-pressed="true">BRONZE</button>
+      <button class="pill on" data-filter="km3net" aria-pressed="true">KM3NET</button>
       <span class="sep"></span>
-      <button class="pill on" data-filter="up">up-going</button>
-      <button class="pill on" data-filter="down">down-going</button>
+      <button class="pill on" data-filter="up" aria-pressed="true">up-going</button>
+      <button class="pill on" data-filter="down" aria-pressed="true">down-going</button>
       <span class="sep"></span>
-      <button class="pill" data-layer="agm" title="AGM2015 antineutrino global map — MeV-range flux. Different physics regime from the TeV/PeV events on this map.">AGM2015 <span class="nu">ν̄</span> flux</button>
-      <select id="agmChannel" class="layer-sub" hidden>
+      <button class="pill" data-layer="agm" aria-pressed="false" title="AGM2015 antineutrino global map — MeV-range flux. Different physics regime from the TeV/PeV events on this map.">AGM2015 <span class="nu">ν̄</span> flux</button>
+      <select id="agmChannel" class="layer-sub" aria-label="AGM2015 overlay channel" hidden>
         <option value="all">total flux</option>
         <option value="reactor">reactor only</option>
         <option value="geological">geo only (U + Th)</option>
@@ -62,7 +74,7 @@
     </div>
     <div class="timeline-row">
       <button id="playBtn" type="button" class="play-btn" aria-label="Play"><span class="icon">▶</span></button>
-      <input id="timeline" type="range" min="0" max="1000" value="1000" step="1">
+      <input id="timeline" type="range" min="0" max="1000" value="1000" step="1" aria-label="Timeline — show events up to a date">
       <span id="timelineLabel" class="meta">all events</span>
     </div>
   </section>
@@ -94,7 +106,7 @@
         <h2 id="results-summary"></h2>
       </div>
       <div class="results-controls">
-        <input id="searchInput" type="search" placeholder="Search by ID, RA, or comment…" autocomplete="off">
+        <input id="searchInput" type="search" placeholder="Search by ID, RA, or comment…" autocomplete="off" aria-label="Search events by ID, coordinates, or comment">
         <label class="sort-label">
           Sort
           <select id="sortBy">
