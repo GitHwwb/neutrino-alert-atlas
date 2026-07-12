@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-07-12T13:02:11.651748Z",
+  "generated_at_utc": "2026-07-12T18:54:20.301214Z",
   "source_url": "https://gcn.gsfc.nasa.gov/amon_icecube_gold_bronze_events.html",
   "icecube_ecef_km": [
     0.0,
@@ -11,13 +11,13 @@
   "events": [
     {
       "id": "142854_16534371",
-      "rev": 0,
+      "rev": 1,
       "datetime_utc": "2026-07-12T11:06:48.980000Z",
       "notice_type": "BRONZE",
-      "ra_deg": 200.1124,
-      "dec_deg": 48.1848,
-      "err90_arcmin": 30.8,
-      "err50_arcmin": 12.0,
+      "ra_deg": 200.11,
+      "dec_deg": 48.2899,
+      "err90_arcmin": 27.22,
+      "err50_arcmin": 14.88,
       "energy": 166.72,
       "signalness": 0.54752,
       "far_per_yr": 0.1472,
@@ -29,9 +29,9 @@
         -6356.752
       ],
       "source_ecef_unit": [
-        -0.154145,
-        0.650475,
-        0.743721
+        -0.1538,
+        0.649153,
+        0.744946
       ],
       "simbad_candidates": [
         {
@@ -71,10 +71,10 @@
         }
       ],
       "is_up_going": true,
-      "entry_lat": 6.098795,
-      "entry_lon": 103.331595,
-      "subsource_lat": 48.049398,
-      "subsource_lon": 103.331595
+      "entry_lat": 6.309003,
+      "entry_lon": 103.328998,
+      "subsource_lat": 48.154501,
+      "subsource_lon": 103.328998
     },
     {
       "id": "142827_7869742",
