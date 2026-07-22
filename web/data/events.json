@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-07-22T05:41:19.184116Z",
+  "generated_at_utc": "2026-07-22T08:12:08.053710Z",
   "source_url": "https://gcn.gsfc.nasa.gov/amon_icecube_gold_bronze_events.html",
   "icecube_ecef_km": [
     0.0,
@@ -7,8 +7,75 @@
     -6356.752
   ],
   "earth_radius_km": 6356.752,
-  "event_count": 187,
+  "event_count": 188,
   "events": [
+    {
+      "id": "142900_47091427",
+      "rev": 0,
+      "datetime_utc": "2026-07-22T06:58:22.820000Z",
+      "notice_type": "BRONZE",
+      "ra_deg": 191.099,
+      "dec_deg": 31.0049,
+      "err90_arcmin": 33.85,
+      "err50_arcmin": 13.18,
+      "energy": 114.95,
+      "signalness": 0.41448,
+      "far_per_yr": 1.4973,
+      "comments": "IceCube Bronze event.       The position error is statistical only, there is no systematic added.",
+      "detector": "IceCube",
+      "detector_ecef_km": [
+        0.0,
+        0.0,
+        -6356.752
+      ],
+      "source_ecef_unit": [
+        -0.718102,
+        0.470303,
+        0.512976
+      ],
+      "simbad_candidates": [
+        {
+          "name": "[M60b]+31 388",
+          "otype": "*",
+          "sep_arcmin": 1.609302,
+          "ra_deg": 191.068559,
+          "dec_deg": 30.99869
+        },
+        {
+          "name": "H-ATLAS J124417.5+310124",
+          "otype": "LeG",
+          "sep_arcmin": 1.743423,
+          "ra_deg": 191.072715,
+          "dec_deg": 31.023253
+        },
+        {
+          "name": "[M60b]+31 387",
+          "otype": "*",
+          "sep_arcmin": 2.652674,
+          "ra_deg": 191.062649,
+          "dec_deg": 30.973538
+        },
+        {
+          "name": "SDSS J124421.22+310302.6",
+          "otype": "QSO",
+          "sep_arcmin": 2.803025,
+          "ra_deg": 191.08845,
+          "dec_deg": 31.050734
+        },
+        {
+          "name": "SDSS J124431.06+310257.7",
+          "otype": "QSO",
+          "sep_arcmin": 3.092956,
+          "ra_deg": 191.129437,
+          "dec_deg": 31.049364
+        }
+      ],
+      "is_up_going": true,
+      "entry_lat": -28.275408,
+      "entry_lon": 146.778207,
+      "subsource_lat": 30.862296,
+      "subsource_lon": 146.778207
+    },
     {
       "id": "142854_16534371",
       "rev": 1,
