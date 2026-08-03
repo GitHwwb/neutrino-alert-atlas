@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-08-02T18:58:38.253846Z",
+  "generated_at_utc": "2026-08-03T02:02:52.609280Z",
   "source_url": "https://gcn.gsfc.nasa.gov/amon_icecube_gold_bronze_events.html",
   "icecube_ecef_km": [
     0.0,
@@ -71,9 +71,9 @@
         }
       ],
       "is_up_going": true,
-      "entry_lat": -28.285726,
+      "entry_lat": -28.285725,
       "entry_lon": 146.229991,
-      "subsource_lat": 30.857137,
+      "subsource_lat": 30.857138,
       "subsource_lon": 146.229991
     },
     {
