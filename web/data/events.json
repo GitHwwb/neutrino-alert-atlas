@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-08-05T13:47:58.653864Z",
+  "generated_at_utc": "2026-08-05T16:27:23.958794Z",
   "source_url": "https://gcn.gsfc.nasa.gov/amon_icecube_gold_bronze_events.html",
   "icecube_ecef_km": [
     0.0,
@@ -7,8 +7,75 @@
     -6356.752
   ],
   "earth_radius_km": 6356.752,
-  "event_count": 188,
+  "event_count": 189,
   "events": [
+    {
+      "id": "142956_64385264",
+      "rev": 0,
+      "datetime_utc": "2026-08-05T14:01:39.700000Z",
+      "notice_type": "BRONZE",
+      "ra_deg": 61.1775,
+      "dec_deg": 26.1241,
+      "err90_arcmin": 30.8,
+      "err50_arcmin": 12.0,
+      "energy": 122.89,
+      "signalness": 0.42063,
+      "far_per_yr": 1.4484,
+      "comments": "IceCube Bronze event.       The position error is statistical only, there is no systematic added.",
+      "detector": "IceCube",
+      "detector_ecef_km": [
+        0.0,
+        0.0,
+        -6356.752
+      ],
+      "source_ecef_unit": [
+        -0.201423,
+        -0.874385,
+        0.441451
+      ],
+      "simbad_candidates": [
+        {
+          "name": "G   8-9",
+          "otype": "PM*",
+          "sep_arcmin": 1.009559,
+          "ra_deg": 61.178184,
+          "dec_deg": 26.107285
+        },
+        {
+          "name": "[GBA2007] 210",
+          "otype": "X",
+          "sep_arcmin": 1.051414,
+          "ra_deg": 61.170542,
+          "dec_deg": 26.140472
+        },
+        {
+          "name": "[GBA2007] 204",
+          "otype": "X",
+          "sep_arcmin": 1.637582,
+          "ra_deg": 61.152667,
+          "dec_deg": 26.108361
+        },
+        {
+          "name": "[GBA2007] 223",
+          "otype": "X",
+          "sep_arcmin": 2.097676,
+          "ra_deg": 61.215125,
+          "dec_deg": 26.133111
+        },
+        {
+          "name": "[GBA2007] 202",
+          "otype": "X",
+          "sep_arcmin": 2.303204,
+          "ra_deg": 61.144542,
+          "dec_deg": 26.148556
+        }
+      ],
+      "is_up_going": true,
+      "entry_lat": -37.607006,
+      "entry_lon": -102.972317,
+      "subsource_lat": 26.196497,
+      "subsource_lon": -102.972317
+    },
     {
       "id": "142900_47091427",
       "rev": 1,
