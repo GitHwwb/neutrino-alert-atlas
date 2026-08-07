@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-08-07T04:49:19.503392Z",
+  "generated_at_utc": "2026-08-07T07:02:24.643438Z",
   "source_url": "https://gcn.gsfc.nasa.gov/amon_icecube_gold_bronze_events.html",
   "icecube_ecef_km": [
     0.0,
@@ -7,8 +7,75 @@
     -6356.752
   ],
   "earth_radius_km": 6356.752,
-  "event_count": 189,
+  "event_count": 190,
   "events": [
+    {
+      "id": "142963_68892416",
+      "rev": 0,
+      "datetime_utc": "2026-08-07T06:04:41.720000Z",
+      "notice_type": "BRONZE",
+      "ra_deg": 323.8093,
+      "dec_deg": 0.3515,
+      "err90_arcmin": 56.93,
+      "err50_arcmin": 22.18,
+      "energy": 112.59,
+      "signalness": 0.29141,
+      "far_per_yr": 3.9129,
+      "comments": "IceCube Bronze event.       The position error is statistical only, there is no systematic added.",
+      "detector": "IceCube",
+      "detector_ecef_km": [
+        0.0,
+        0.0,
+        -6356.752
+      ],
+      "source_ecef_unit": [
+        0.125316,
+        -0.992083,
+        0.008242
+      ],
+      "simbad_candidates": [
+        {
+          "name": "SDSS J213517.65+002055.6",
+          "otype": "G",
+          "sep_arcmin": 0.871111,
+          "ra_deg": 323.823564,
+          "dec_deg": 0.348792
+        },
+        {
+          "name": "SDSSCGB 10737.1",
+          "otype": "G",
+          "sep_arcmin": 0.964571,
+          "ra_deg": 323.822592,
+          "dec_deg": 0.360542
+        },
+        {
+          "name": "UCAC4 452-119617",
+          "otype": "*",
+          "sep_arcmin": 1.08114,
+          "ra_deg": 323.825895,
+          "dec_deg": 0.358522
+        },
+        {
+          "name": "2SLAQ J213517.46+002020.3",
+          "otype": "Sy1",
+          "sep_arcmin": 1.103438,
+          "ra_deg": 323.822783,
+          "dec_deg": 0.338993
+        },
+        {
+          "name": "SDSSCGB 10737.3",
+          "otype": "G",
+          "sep_arcmin": 1.147894,
+          "ra_deg": 323.823377,
+          "dec_deg": 0.364456
+        }
+      ],
+      "is_up_going": true,
+      "entry_lat": -89.055469,
+      "entry_lon": -82.800748,
+      "subsource_lat": 0.472265,
+      "subsource_lon": -82.800748
+    },
     {
       "id": "142956_64385264",
       "rev": 1,
