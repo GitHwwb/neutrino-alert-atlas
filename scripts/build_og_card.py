@@ -26,6 +26,10 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 CACHE = os.path.join(HERE, "agm_src")
 EVENTS = os.path.join(HERE, "..", "web", "data", "events.json")
 COAST = os.path.join(CACHE, "ne_110m_coastline.geojson")
+COAST_URL = (
+    "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/"
+    "master/geojson/ne_110m_coastline.geojson"
+)
 OUT = os.path.normpath(os.path.join(HERE, "..", "web", "og-card.png"))
 
 W, H = 1200, 630
@@ -51,6 +55,7 @@ FONTS = {
 def _fetch(url: str, dest: str) -> str:
     if not os.path.exists(dest):
         print(f"  downloading {os.path.basename(dest)}")
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
         ctx = ssl.create_default_context(cafile=certifi.where())
         with urllib.request.urlopen(url, context=ctx) as r, open(dest, "wb") as f:
             f.write(r.read())
@@ -59,6 +64,8 @@ def _fetch(url: str, dest: str) -> str:
 
 def event_color(e: dict) -> tuple[int, int, int]:
     # Port of app.js eventColor(): mix muted slate -> tier color by signalness.
+    if e["notice_type"] == "KM3NET":
+        return TIER_BASE["KM3NET"]
     sig = max(0.0, min(1.0, e["signalness"]))
     t = 0.15 + 0.85 * sig
     base = TIER_BASE.get(e["notice_type"], TIER_BASE["BRONZE"])
@@ -94,7 +101,13 @@ def draw_coastlines(draw: ImageDraw.ImageDraw) -> None:
 
 def draw_events(draw: ImageDraw.ImageDraw, events: list[dict]) -> None:
     # Low-signalness first so confident events render on top in dense areas.
-    for e in sorted(events, key=lambda e: e["signalness"]):
+    for e in sorted(
+        events,
+        key=lambda e: (
+            e["signalness"] is None,
+            e["signalness"] if e["signalness"] is not None else 0,
+        ),
+    ):
         up = e["is_up_going"]
         lat = e["entry_lat"] if up else e["subsource_lat"]
         lon = e["entry_lon"] if up else e["subsource_lon"]
@@ -113,6 +126,7 @@ def draw_events(draw: ImageDraw.ImageDraw, events: list[dict]) -> None:
 def main() -> None:
     for name, url in FONTS.items():
         _fetch(url, os.path.join(CACHE, name))
+    _fetch(COAST_URL, COAST)
 
     with open(EVENTS) as f:
         payload = json.load(f)
@@ -138,7 +152,7 @@ def main() -> None:
     draw.text((x0, y0 + 52), "Astrophysical Neutrino", font=serif, fill=INK)
     draw.text((x0, y0 + 144), "Alert Atlas", font=serif_it, fill=ACCENT)
 
-    stats = f"{payload['event_count']} EVENTS · {years[0]}–{years[-1]} · UPDATED EVERY 3 H"
+    stats = f"{payload['event_count']} EVENTS · {years[0]}–{years[-1]} · SOURCE CHECKED EVERY 3 H"
     # Halo stroke in the background color so the line stays legible where
     # event dots crowd the southern hemisphere.
     draw.text((x0, H - 92), stats, font=mono, fill=MUTED,

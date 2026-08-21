@@ -8,7 +8,11 @@ trivial vector math against an observer position to get a closest-approach dista
 
 from __future__ import annotations
 
+import argparse
+import copy
 import json
+import math
+import os
 import ssl
 import sys
 import time
@@ -27,21 +31,33 @@ from bs4 import BeautifulSoup
 GCN_URL = "https://gcn.gsfc.nasa.gov/amon_icecube_gold_bronze_events.html"
 OUTPUT = Path(__file__).resolve().parent.parent / "web" / "data" / "events.json"
 
-# Mean Earth radius for non-polar detectors; polar radius is fine for IceCube
-# (and a sub-percent difference at km scale anyway).
-EARTH_RADIUS_KM = 6371.0
-EARTH_POLAR_RADIUS_KM = 6356.752
+# WGS84 ellipsoid. Observer inputs are ordinary geodetic latitude/longitude,
+# so using the same reference here avoids the ~20 km errors produced by a
+# spherical conversion at mid-latitudes.
+WGS84_A_KM = 6378.137
+WGS84_F = 1.0 / 298.257223563
+WGS84_B_KM = WGS84_A_KM * (1.0 - WGS84_F)
+WGS84_E2 = WGS84_F * (2.0 - WGS84_F)
+MINIMUM_ACTIVE_EVENTS = 150
+MAX_EVENT_DROP_FRACTION = 0.10
 
 
-def latlon_to_ecef_km(lat_deg: float, lon_deg: float, depth_m: float = 0.0) -> np.ndarray:
-    """Spherical lat/lon (+ depth below surface in meters) to ECEF km."""
-    r_km = EARTH_RADIUS_KM - depth_m / 1000.0
+def geodetic_to_ecef_km(
+    lat_deg: float,
+    lon_deg: float,
+    depth_m: float = 0.0,
+) -> np.ndarray:
+    """Convert WGS84 geodetic coordinates and depth below surface to ECEF km."""
     lat = np.radians(lat_deg)
     lon = np.radians(lon_deg)
+    sin_lat = np.sin(lat)
+    cos_lat = np.cos(lat)
+    altitude_km = -depth_m / 1000.0
+    prime_vertical_radius = WGS84_A_KM / np.sqrt(1.0 - WGS84_E2 * sin_lat**2)
     return np.array([
-        r_km * np.cos(lat) * np.cos(lon),
-        r_km * np.cos(lat) * np.sin(lon),
-        r_km * np.sin(lat),
+        (prime_vertical_radius + altitude_km) * cos_lat * np.cos(lon),
+        (prime_vertical_radius + altitude_km) * cos_lat * np.sin(lon),
+        (prime_vertical_radius * (1.0 - WGS84_E2) + altitude_km) * sin_lat,
     ])
 
 
@@ -50,21 +66,35 @@ def latlon_to_ecef_km(lat_deg: float, lon_deg: float, depth_m: float = 0.0) -> n
 DETECTORS = {
     "icecube": {
         "name": "IceCube",
-        "ecef_km": np.array([0.0, 0.0, -EARTH_POLAR_RADIUS_KM]),
+        "lat_deg": -90.0,
+        "lon_deg": 0.0,
+        "depth_m": 1950.0,
     },
     "km3net-arca": {
         "name": "KM3NeT/ARCA",
-        "ecef_km": latlon_to_ecef_km(36.2667, 16.1, depth_m=3500),
+        "lat_deg": 36.2667,
+        "lon_deg": 16.1,
+        "depth_m": 3500.0,
     },
     "km3net-orca": {
         "name": "KM3NeT/ORCA",
-        "ecef_km": latlon_to_ecef_km(42.8, 6.0333, depth_m=2450),
+        "lat_deg": 42.8,
+        "lon_deg": 6.0333,
+        "depth_m": 2450.0,
     },
     "baikal-gvd": {
         "name": "Baikal-GVD",
-        "ecef_km": latlon_to_ecef_km(51.7667, 104.4, depth_m=1100),
+        "lat_deg": 51.7667,
+        "lon_deg": 104.4,
+        "depth_m": 1100.0,
     },
 }
+for detector in DETECTORS.values():
+    detector["ecef_km"] = geodetic_to_ecef_km(
+        detector["lat_deg"],
+        detector["lon_deg"],
+        detector["depth_m"],
+    )
 ICECUBE_ECEF_KM = DETECTORS["icecube"]["ecef_km"]
 
 
@@ -75,13 +105,13 @@ class RawRow:
     date_str: str
     time_str: str
     notice_type: str
-    ra_deg: float
-    dec_deg: float
-    err90_arcmin: float
-    err50_arcmin: float
-    energy: float
-    signalness: float
-    far_per_yr: float
+    ra_deg: float | None
+    dec_deg: float | None
+    err90_arcmin: float | None
+    err50_arcmin: float | None
+    energy: float | None
+    signalness: float | None
+    far_per_yr: float | None
     comments: str
 
 
@@ -128,26 +158,38 @@ def parse_rows(html: str) -> list[RawRow]:
         if "_" not in texts[0] or texts[4] not in ("GOLD", "BRONZE"):
             continue
         try:
-            rows.append(
-                RawRow(
-                    run_event=texts[0],
-                    rev=int(texts[1]),
-                    date_str=texts[2],
-                    time_str=texts[3],
-                    notice_type=texts[4],
-                    ra_deg=float(texts[5]),
-                    dec_deg=float(texts[6]),
-                    err90_arcmin=float(texts[7]),
-                    err50_arcmin=float(texts[8]),
-                    energy=float(texts[9]),
-                    signalness=float(texts[10]),
-                    far_per_yr=float(texts[11]),
-                    comments=texts[12],
-                )
+            revision = int(texts[1])
+        except ValueError as exc:
+            raise ValueError(
+                f"recognized GCN row {texts[0]} has invalid revision {texts[1]!r}"
+            ) from exc
+
+        def optional_float(value: str) -> float | None:
+            try:
+                return float(value)
+            except ValueError:
+                return None
+
+        # Preserve recognized rows with malformed metrics through revision
+        # selection. Otherwise a malformed latest row can silently revive an
+        # obsolete earlier revision.
+        rows.append(
+            RawRow(
+                run_event=texts[0],
+                rev=revision,
+                date_str=texts[2],
+                time_str=texts[3],
+                notice_type=texts[4],
+                ra_deg=optional_float(texts[5]),
+                dec_deg=optional_float(texts[6]),
+                err90_arcmin=optional_float(texts[7]),
+                err50_arcmin=optional_float(texts[8]),
+                energy=optional_float(texts[9]),
+                signalness=optional_float(texts[10]),
+                far_per_yr=optional_float(texts[11]),
+                comments=texts[12],
             )
-        except ValueError:
-            # Skip rows with non-numeric placeholders (e.g. "Network problem" entries)
-            continue
+        )
     return rows
 
 
@@ -159,6 +201,56 @@ def latest_revisions(rows: list[RawRow]) -> list[RawRow]:
         if prior is None or row.rev > prior.rev:
             by_event[row.run_event] = row
     return list(by_event.values())
+
+
+def partition_active_rows(
+    rows: list[RawRow],
+) -> tuple[list[RawRow], list[dict[str, object]]]:
+    """Separate active alerts from latest revisions with unavailable metrics."""
+    active: list[RawRow] = []
+    excluded: list[dict[str, object]] = []
+    for row in rows:
+        numeric_values = (
+            row.ra_deg,
+            row.dec_deg,
+            row.err90_arcmin,
+            row.err50_arcmin,
+            row.energy,
+            row.signalness,
+            row.far_per_yr,
+        )
+        invalid = any(
+            value is None or not math.isfinite(value)
+            for value in numeric_values
+        )
+        invalid = invalid or any(
+            value is not None and value <= 0
+            for value in (
+                row.err90_arcmin,
+                row.err50_arcmin,
+                row.energy,
+                row.signalness,
+                row.far_per_yr,
+            )
+        )
+        invalid = invalid or (
+            row.ra_deg is not None
+            and row.dec_deg is not None
+            and not (0 <= row.ra_deg < 360 and -90 <= row.dec_deg <= 90)
+        )
+        try:
+            parse_datetime(row.date_str, row.time_str)
+        except (TypeError, ValueError):
+            invalid = True
+        if invalid:
+            excluded.append({
+                "id": row.run_event,
+                "rev": row.rev,
+                "reason": "latest revision has unavailable alert metrics",
+            })
+        else:
+            active.append(row)
+    return active, excluded
 
 
 def parse_datetime(date_str: str, time_str: str) -> datetime:
@@ -182,12 +274,53 @@ def source_ecef_unit(ra_deg: float, dec_deg: float, when: datetime) -> np.ndarra
 
 
 def ecef_to_geodetic(p_km: np.ndarray) -> tuple[float, float]:
-    """Spherical lat/lon for a surface point. Good enough for visualization."""
+    """Convert an ECEF point to WGS84 geodetic latitude/longitude."""
     x, y, z = p_km
-    r = float(np.linalg.norm(p_km))
-    lat = float(np.degrees(np.arcsin(z / r)))
+    horizontal = float(np.hypot(x, y))
     lon = float(np.degrees(np.arctan2(y, x)))
-    return lat, lon
+    if horizontal < 1e-12:
+        return (90.0 if z >= 0 else -90.0), lon
+
+    lat = math.atan2(z, horizontal * (1.0 - WGS84_E2))
+    for _ in range(10):
+        sin_lat = math.sin(lat)
+        prime_vertical_radius = WGS84_A_KM / math.sqrt(
+            1.0 - WGS84_E2 * sin_lat**2
+        )
+        next_lat = math.atan2(
+            z + WGS84_E2 * prime_vertical_radius * sin_lat,
+            horizontal,
+        )
+        if abs(next_lat - lat) < 1e-14:
+            lat = next_lat
+            break
+        lat = next_lat
+    return math.degrees(lat), lon
+
+
+def atmospheric_entry_ecef_km(
+    detector_ecef_km: np.ndarray,
+    source_unit: np.ndarray,
+) -> np.ndarray:
+    """Intersect the incoming ray from detector toward source with WGS84."""
+    dx, dy, dz = detector_ecef_km
+    sx, sy, sz = source_unit
+    a2 = WGS84_A_KM**2
+    b2 = WGS84_B_KM**2
+    qa = (sx**2 + sy**2) / a2 + sz**2 / b2
+    qb = 2.0 * ((dx * sx + dy * sy) / a2 + dz * sz / b2)
+    qc = (dx**2 + dy**2) / a2 + dz**2 / b2 - 1.0
+    discriminant = qb**2 - 4.0 * qa * qc
+    if discriminant < 0:
+        raise ValueError("detector-source ray does not intersect WGS84")
+    roots = (
+        (-qb - math.sqrt(discriminant)) / (2.0 * qa),
+        (-qb + math.sqrt(discriminant)) / (2.0 * qa),
+    )
+    positive_roots = [root for root in roots if root >= 0]
+    if not positive_roots:
+        raise ValueError("detector-source ray has no forward WGS84 intersection")
+    return detector_ecef_km + max(positive_roots) * source_unit
 
 
 def trajectory_geometry(source_unit: np.ndarray, detector_ecef_km: np.ndarray) -> dict:
@@ -195,30 +328,30 @@ def trajectory_geometry(source_unit: np.ndarray, detector_ecef_km: np.ndarray) -
 
     - subsource_lat/lon: where on Earth the source was directly overhead at event
       time. Detector-independent.
-    - entry_lat/lon: where the neutrino's path entered Earth's atmosphere on its
-      way through to the detector. Only physically meaningful for up-going
-      events (neutrino travel direction has positive component along the
-      detector's outward radial). For down-going events the neutrino enters
-      Earth at the detector itself.
-
-    Line: r(t) = detector + t * source_unit. The trajectory crosses Earth's
-    surface at t = 0 (the detector, approximately) and t = -2 * (detector·src).
-    "Up-going" ↔ velocity (-source_unit) has positive component along the
-    detector's local zenith ↔ source_unit · detector_unit < 0.
+    - entry_lat/lon and entry_ecef_km: where the incoming ray from the detector
+      toward the source intersects the WGS84 surface. This is the finite
+      trajectory endpoint used for observer-distance calculations.
     """
-    sub_lat, sub_lon = ecef_to_geodetic(source_unit * EARTH_POLAR_RADIUS_KM)
-    detector_unit = detector_ecef_km / np.linalg.norm(detector_ecef_km)
-    is_up_going = bool(np.dot(source_unit, detector_unit) < 0)
-    if is_up_going:
-        t = -2.0 * float(np.dot(detector_ecef_km, source_unit))
-        entry = detector_ecef_km + t * source_unit
-        entry_lat, entry_lon = ecef_to_geodetic(entry)
-    else:
-        entry_lat, entry_lon = None, None
+    # A source is directly overhead where the local ellipsoid normal points in
+    # the source direction. Geodetic latitude is defined by that normal.
+    sub_lat = math.degrees(math.asin(float(source_unit[2])))
+    sub_lon = math.degrees(math.atan2(float(source_unit[1]), float(source_unit[0])))
+    detector_lat, detector_lon = ecef_to_geodetic(detector_ecef_km)
+    detector_lat_rad = math.radians(detector_lat)
+    detector_lon_rad = math.radians(detector_lon)
+    local_up = np.array([
+        math.cos(detector_lat_rad) * math.cos(detector_lon_rad),
+        math.cos(detector_lat_rad) * math.sin(detector_lon_rad),
+        math.sin(detector_lat_rad),
+    ])
+    is_up_going = bool(np.dot(source_unit, local_up) < 0)
+    entry = atmospheric_entry_ecef_km(detector_ecef_km, source_unit)
+    entry_lat, entry_lon = ecef_to_geodetic(entry)
     return {
         "is_up_going": is_up_going,
         "entry_lat": entry_lat,
         "entry_lon": entry_lon,
+        "entry_ecef_km": [float(value) for value in entry],
         "subsource_lat": sub_lat,
         "subsource_lon": sub_lon,
     }
@@ -231,10 +364,13 @@ def to_event_dict(row: RawRow, simbad_cache: dict[str, list]) -> dict:
     # SIMBAD lookup is rate-limited so we cache results from previous runs.
     if row.run_event in simbad_cache:
         candidates = simbad_cache[row.run_event]
+        simbad_lookup = {"status": "ok", "candidates": candidates}
     else:
-        candidates = query_simbad(row.ra_deg, row.dec_deg, row.err90_arcmin)
-        time.sleep(0.4)
-        simbad_cache[row.run_event] = candidates
+        simbad_lookup = query_simbad(row.ra_deg, row.dec_deg, row.err90_arcmin)
+        if simbad_lookup["status"] == "ok":
+            time.sleep(0.4)
+            simbad_cache[row.run_event] = simbad_lookup["candidates"]
+    simbad_lookup = remove_neutrino_alert_records(simbad_lookup)
     return {
         "id": row.run_event,
         "rev": row.rev,
@@ -249,9 +385,16 @@ def to_event_dict(row: RawRow, simbad_cache: dict[str, list]) -> dict:
         "far_per_yr": row.far_per_yr,
         "comments": row.comments,
         "detector": "IceCube",
+        "detector_lat": DETECTORS["icecube"]["lat_deg"],
+        "detector_lon": DETECTORS["icecube"]["lon_deg"],
         "detector_ecef_km": ICECUBE_ECEF_KM.tolist(),
+        "energy_basis": (
+            "Most-probable neutrino energy under the IceCube alert "
+            "pipeline's E^-2.19 astrophysical-flux model"
+        ),
+        "metrics_source": "NASA GCN AMON IceCube Gold/Bronze notice",
         "source_ecef_unit": [float(src[0]), float(src[1]), float(src[2])],
-        "simbad_candidates": candidates,
+        "simbad_lookup": simbad_lookup,
         **geom,
     }
 
@@ -267,12 +410,17 @@ HAND_CURATED_EVENTS = [
         "detector_key": "km3net-arca",
         "ra_deg": 94.3,
         "dec_deg": -7.8,
-        "err90_arcmin": 84.0,        # ~1.4° published 90% C.L. radius
-        "err50_arcmin": 42.0,        # estimate (~0.7° 50% radius)
+        "err90_arcmin": 132.0,       # 2.2° published 90% C.L. radius
+        "err50_arcmin": 72.0,        # 1.2° published 50% C.L. radius
         "energy": 2.2e5,             # ~220 PeV in TeV — the GCN table's unit, so
-                                     # `energy` is comparable across all events
-        "signalness": 0.99,          # treated as essentially astrophysical
-        "far_per_yr": 0.0001,        # extremely low FAR (single event, unique morphology)
+                                     # formatting can remain consistent
+        "energy_basis": (
+            "Median incoming-neutrino energy under the KM3NeT paper's "
+            "E^-2 spectrum assumption"
+        ),
+        # The Nature paper does not publish IceCube-alert signalness or FAR.
+        "signalness": None,
+        "far_per_yr": None,
         "comments": (
             "KM3NeT/ARCA single ultra-high-energy detection. Reconstructed "
             "neutrino energy ~220 PeV (90% C.L. range ~72 PeV – 2.6 EeV). "
@@ -303,10 +451,17 @@ def to_hand_curated_event_dict(entry: dict, simbad_cache: dict[str, list]) -> di
     geom = trajectory_geometry(src, detector["ecef_km"])
     if entry["id"] in simbad_cache:
         candidates = simbad_cache[entry["id"]]
+        simbad_lookup = {"status": "ok", "candidates": candidates}
     else:
-        candidates = query_simbad(entry["ra_deg"], entry["dec_deg"], entry["err90_arcmin"])
-        time.sleep(0.4)
-        simbad_cache[entry["id"]] = candidates
+        simbad_lookup = query_simbad(
+            entry["ra_deg"],
+            entry["dec_deg"],
+            entry["err90_arcmin"],
+        )
+        if simbad_lookup["status"] == "ok":
+            time.sleep(0.4)
+            simbad_cache[entry["id"]] = simbad_lookup["candidates"]
+    simbad_lookup = remove_neutrino_alert_records(simbad_lookup)
     return {
         "id": entry["id"],
         "rev": 0,
@@ -321,19 +476,42 @@ def to_hand_curated_event_dict(entry: dict, simbad_cache: dict[str, list]) -> di
         "far_per_yr": entry["far_per_yr"],
         "comments": entry["comments"],
         "detector": detector["name"],
+        "detector_lat": detector["lat_deg"],
+        "detector_lon": detector["lon_deg"],
         "detector_ecef_km": detector["ecef_km"].tolist(),
+        "energy_basis": entry["energy_basis"],
+        "metrics_source": "KM3NeT Collaboration, Nature 638, 376-382 (2025)",
         "reference_url": entry.get("reference_url"),
         "source_ecef_unit": [float(src[0]), float(src[1]), float(src[2])],
-        "simbad_candidates": candidates,
+        "simbad_lookup": simbad_lookup,
         **geom,
     }
 
 
-def query_simbad(ra_deg: float, dec_deg: float, err90_arcmin: float) -> list[dict]:
+def remove_neutrino_alert_records(lookup: dict) -> dict:
+    """Remove catalog records for the neutrino alert itself, not real sources."""
+    filtered = []
+    for candidate in lookup.get("candidates", []):
+        normalized_name = candidate.get("name", "").strip().upper()
+        if normalized_name.startswith("NAME "):
+            normalized_name = normalized_name[5:].strip()
+        separation = candidate.get("sep_arcmin")
+        is_neutrino_alert = normalized_name.startswith(("ICECUBE-", "KM3-"))
+        is_same_position = (
+            isinstance(separation, (int, float))
+            and math.isfinite(separation)
+            and separation <= 0.05
+        )
+        if not (is_neutrino_alert and is_same_position):
+            filtered.append(candidate)
+    return {**lookup, "candidates": filtered}
+
+
+def query_simbad(ra_deg: float, dec_deg: float, err90_arcmin: float) -> dict:
     """Return up to 5 nearest SIMBAD objects within the 90% error radius.
 
-    On any failure (network, server, query error), returns []. We cache results
-    across runs so transient failures don't repeatedly cost the user time.
+    Successful empty results and failed lookups are distinct so a transient
+    outage is never presented or cached as "no nearby objects."
     """
     try:
         from astroquery.simbad import Simbad
@@ -346,7 +524,7 @@ def query_simbad(ra_deg: float, dec_deg: float, err90_arcmin: float) -> list[dic
         coord = SkyCoord(ra=ra_deg * u.deg, dec=dec_deg * u.deg, frame="icrs")
         results = s.query_region(coord, radius=err90_arcmin * u.arcmin)
         if results is None or len(results) == 0:
-            return []
+            return {"status": "ok", "candidates": []}
         candidates: list[dict] = []
         for row in results:
             name = None
@@ -389,10 +567,14 @@ def query_simbad(ra_deg: float, dec_deg: float, err90_arcmin: float) -> list[dic
                 })
         # Sort by separation and keep nearest 5.
         candidates.sort(key=lambda c: c["sep_arcmin"] if c["sep_arcmin"] is not None else 1e9)
-        return candidates[:5]
+        return {"status": "ok", "candidates": candidates[:5]}
     except Exception as exc:
         print(f"  SIMBAD lookup failed for RA={ra_deg}, Dec={dec_deg}: {exc}", file=sys.stderr)
-        return []
+        return {
+            "status": "error",
+            "candidates": [],
+            "message": str(exc),
+        }
 
 
 def load_simbad_cache() -> dict[str, list]:
@@ -410,53 +592,286 @@ def load_simbad_cache() -> dict[str, list]:
         return {}
     cache: dict[str, list] = {}
     for ev in prev.get("events", []):
-        cands = ev.get("simbad_candidates")
-        if cands is None:
+        lookup = ev.get("simbad_lookup")
+        if (
+            isinstance(lookup, dict)
+            and lookup.get("status") == "ok"
+            and isinstance(lookup.get("candidates"), list)
+        ):
+            cache[ev["id"]] = lookup["candidates"]
             continue
-        if not cands:
-            cache[ev["id"]] = cands     # empty list = no candidates found, valid
-        elif all(("ra_deg" in c and "dec_deg" in c) for c in cands):
-            cache[ev["id"]] = cands
-        # else: skip → re-query
+
+        # A non-empty legacy result proves the old lookup succeeded. Legacy
+        # empty arrays were ambiguous because failures also returned [].
+        legacy = ev.get("simbad_candidates")
+        if (
+            isinstance(legacy, list)
+            and legacy
+            and all(("ra_deg" in c and "dec_deg" in c) for c in legacy)
+        ):
+            cache[ev["id"]] = legacy
     return cache
 
 
-def main() -> int:
-    print(f"Fetching {GCN_URL}", file=sys.stderr)
-    html = fetch_html()
+def load_previous_payload() -> dict | None:
+    if not OUTPUT.exists():
+        return None
+    try:
+        return json.loads(OUTPUT.read_text())
+    except (json.JSONDecodeError, OSError):
+        return None
+
+
+def validate_payload(
+    payload: dict,
+    previous_payload: dict | None = None,
+    minimum_events: int = MINIMUM_ACTIVE_EVENTS,
+    max_drop_fraction: float = MAX_EVENT_DROP_FRACTION,
+) -> None:
+    """Reject incomplete or internally inconsistent generated catalogs."""
+    def is_finite_number(value: object) -> bool:
+        return (
+            isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and math.isfinite(value)
+        )
+
+    events = payload.get("events")
+    if not isinstance(events, list):
+        raise ValueError("payload events must be a list")
+    if payload.get("event_count") != len(events):
+        raise ValueError("event_count does not match events length")
+    if len(events) < minimum_events:
+        raise ValueError(
+            f"active event count {len(events)} is below minimum {minimum_events}"
+        )
+
+    if any(not isinstance(event, dict) for event in events):
+        raise ValueError("every payload event must be an object")
+    ids = [event.get("id") for event in events]
+    if any(not isinstance(event_id, str) or not event_id.strip() for event_id in ids):
+        raise ValueError("event id must be a nonempty text field")
+    if len(set(ids)) != len(ids):
+        raise ValueError("duplicate event IDs")
+
+    required = {
+        "id",
+        "datetime_utc",
+        "notice_type",
+        "ra_deg",
+        "dec_deg",
+        "err90_arcmin",
+        "err50_arcmin",
+        "energy",
+        "signalness",
+        "far_per_yr",
+        "detector",
+        "detector_lat",
+        "detector_lon",
+        "detector_ecef_km",
+        "entry_ecef_km",
+        "source_ecef_unit",
+        "is_up_going",
+        "entry_lat",
+        "entry_lon",
+        "subsource_lat",
+        "subsource_lon",
+        "energy_basis",
+        "metrics_source",
+        "comments",
+        "simbad_lookup",
+    }
+    for event in events:
+        missing = required - set(event)
+        if missing:
+            raise ValueError(f"{event.get('id', '<unknown>')} missing fields: {sorted(missing)}")
+        for field in (
+            "id",
+            "datetime_utc",
+            "notice_type",
+            "detector",
+            "energy_basis",
+            "metrics_source",
+        ):
+            if not isinstance(event[field], str) or not event[field].strip():
+                raise ValueError(f"{event['id']} has invalid text field {field}")
+        if not isinstance(event["comments"], str):
+            raise ValueError(f"{event['id']} has invalid text field comments")
+        numeric_positive = (
+            "err90_arcmin",
+            "err50_arcmin",
+            "energy",
+        )
+        if any(
+            not is_finite_number(event[field])
+            or event[field] <= 0
+            for field in numeric_positive
+        ):
+            raise ValueError(f"{event['id']} has invalid positive-valued metrics")
+        if (
+            not is_finite_number(event["ra_deg"])
+            or not is_finite_number(event["dec_deg"])
+            or not 0 <= event["ra_deg"] < 360
+            or not -90 <= event["dec_deg"] <= 90
+        ):
+            raise ValueError(f"{event['id']} has invalid sky coordinates")
+        geographic_fields = (
+            ("detector_lat", -90, 90),
+            ("detector_lon", -180, 180),
+            ("entry_lat", -90, 90),
+            ("entry_lon", -180, 180),
+            ("subsource_lat", -90, 90),
+            ("subsource_lon", -180, 180),
+        )
+        if any(
+            not is_finite_number(event[field])
+            or not lower <= event[field] <= upper
+            for field, lower, upper in geographic_fields
+        ):
+            raise ValueError(f"{event['id']} has invalid geographic coordinates")
+        if not isinstance(event["is_up_going"], bool):
+            raise ValueError(f"{event['id']} has invalid up-going classification")
+        if (
+            event["signalness"] is not None
+            and (
+                not is_finite_number(event["signalness"])
+                or not 0 < event["signalness"] <= 1
+            )
+        ):
+            raise ValueError(f"{event['id']} has invalid signalness")
+        if (
+            event["far_per_yr"] is not None
+            and (
+                not is_finite_number(event["far_per_yr"])
+                or event["far_per_yr"] <= 0
+            )
+        ):
+            raise ValueError(f"{event['id']} has invalid false-alarm rate")
+        for field in ("detector_ecef_km", "entry_ecef_km", "source_ecef_unit"):
+            vector = event[field]
+            if (
+                not isinstance(vector, list)
+                or len(vector) != 3
+                or any(not is_finite_number(value) for value in vector)
+            ):
+                raise ValueError(f"{event['id']} has invalid {field}")
+        if abs(np.linalg.norm(event["source_ecef_unit"]) - 1.0) > 1e-4:
+            raise ValueError(f"{event['id']} source vector is not unit length")
+        detector = np.asarray(event["detector_ecef_km"], dtype=float)
+        entry = np.asarray(event["entry_ecef_km"], dtype=float)
+        source = np.asarray(event["source_ecef_unit"], dtype=float)
+        delta = entry - detector
+        segment_length = float(np.linalg.norm(delta))
+        projection = float(np.dot(delta, source))
+        collinearity_error = float(np.linalg.norm(delta - projection * source))
+        ellipsoid_value = (
+            (entry[0] ** 2 + entry[1] ** 2) / WGS84_A_KM**2
+            + entry[2] ** 2 / WGS84_B_KM**2
+        )
+        if (
+            segment_length <= 0
+            or projection <= 0
+            or collinearity_error > max(0.05, segment_length * 2e-6)
+            or abs(ellipsoid_value - 1.0) > 1e-5
+        ):
+            raise ValueError(f"{event['id']} has invalid atmospheric entry point")
+        lookup = event["simbad_lookup"]
+        if (
+            not isinstance(lookup, dict)
+            or lookup.get("status") not in {"ok", "error"}
+            or not isinstance(lookup.get("candidates"), list)
+        ):
+            raise ValueError(f"{event['id']} has invalid SIMBAD lookup status")
+
+    if previous_payload:
+        previous_count = previous_payload.get("event_count")
+        if isinstance(previous_count, int) and previous_count > 0:
+            drop_fraction = (previous_count - len(events)) / previous_count
+            if drop_fraction > max_drop_fraction:
+                raise ValueError(
+                    f"active event count dropped {drop_fraction:.1%}, "
+                    f"above allowed {max_drop_fraction:.1%}"
+                )
+
+
+def payload_content_changed(payload: dict, previous_payload: dict | None) -> bool:
+    if previous_payload is None:
+        return True
+    current = copy.deepcopy(payload)
+    previous = copy.deepcopy(previous_payload)
+    current.pop("generated_at_utc", None)
+    previous.pop("generated_at_utc", None)
+    return current != previous
+
+
+def write_payload_atomic(payload: dict) -> None:
+    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+    temporary = OUTPUT.with_suffix(".json.tmp")
+    temporary.write_text(json.dumps(round_floats(payload), indent=2) + "\n")
+    os.replace(temporary, OUTPUT)
+
+
+def build_payload(html: str, previous_payload: dict | None) -> dict:
     raw = parse_rows(html)
     print(f"Parsed {len(raw)} table rows", file=sys.stderr)
-    rows = latest_revisions(raw)
-    print(f"Reduced to {len(rows)} unique events (latest revision per event)", file=sys.stderr)
+    latest = latest_revisions(raw)
+    rows, excluded = partition_active_rows(latest)
+    print(
+        f"Reduced to {len(rows)} active events and {len(excluded)} excluded "
+        "latest revisions",
+        file=sys.stderr,
+    )
 
     simbad_cache = load_simbad_cache()
     print(f"SIMBAD cache: {len(simbad_cache)} events already looked up", file=sys.stderr)
 
     events = []
-    for i, r in enumerate(rows, 1):
-        cached = r.run_event in simbad_cache
-        if not cached:
-            print(f"  [{i}/{len(rows)}] querying SIMBAD for {r.run_event}", file=sys.stderr)
-        events.append(to_event_dict(r, simbad_cache))
+    for i, row in enumerate(rows, 1):
+        if row.run_event not in simbad_cache:
+            print(f"  [{i}/{len(rows)}] querying SIMBAD for {row.run_event}", file=sys.stderr)
+        events.append(to_event_dict(row, simbad_cache))
 
     print(f"Adding {len(HAND_CURATED_EVENTS)} hand-curated event(s)", file=sys.stderr)
     for entry in HAND_CURATED_EVENTS:
         events.append(to_hand_curated_event_dict(entry, simbad_cache))
+    events.sort(key=lambda event: event["datetime_utc"], reverse=True)
 
-    events.sort(key=lambda e: e["datetime_utc"], reverse=True)
-
-    payload = {
+    return {
         "generated_at_utc": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "source_url": GCN_URL,
+        "earth_model": "WGS84",
         "icecube_ecef_km": ICECUBE_ECEF_KM.tolist(),
-        "earth_radius_km": EARTH_POLAR_RADIUS_KM,
         "event_count": len(events),
+        "excluded_events": excluded,
         "events": events,
     }
 
-    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    OUTPUT.write_text(json.dumps(round_floats(payload), indent=2))
-    print(f"Wrote {OUTPUT} ({len(events)} events)", file=sys.stderr)
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--validate-only",
+        action="store_true",
+        help="validate the existing events.json without fetching upstream data",
+    )
+    args = parser.parse_args(argv)
+    previous_payload = load_previous_payload()
+    if args.validate_only:
+        if previous_payload is None:
+            raise ValueError(f"cannot validate missing or invalid {OUTPUT}")
+        validate_payload(previous_payload)
+        print(f"Validated {OUTPUT} ({previous_payload['event_count']} events)")
+        return 0
+
+    print(f"Fetching {GCN_URL}", file=sys.stderr)
+    html = fetch_html()
+    payload = round_floats(build_payload(html, previous_payload))
+    validate_payload(payload, previous_payload=previous_payload)
+    if not payload_content_changed(payload, previous_payload):
+        print("No catalog content changes; preserving existing events.json", file=sys.stderr)
+        return 0
+    write_payload_atomic(payload)
+    print(f"Wrote {OUTPUT} ({payload['event_count']} active events)", file=sys.stderr)
     return 0
 
 
