@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-08-21T00:51:08.716390Z",
+  "generated_at_utc": "2026-08-21T03:43:22.449955Z",
   "source_url": "https://gcn.gsfc.nasa.gov/amon_icecube_gold_bronze_events.html",
   "icecube_ecef_km": [
     0.0,
@@ -7,8 +7,75 @@
     -6356.752
   ],
   "earth_radius_km": 6356.752,
-  "event_count": 190,
+  "event_count": 191,
   "events": [
+    {
+      "id": "143020_51776820",
+      "rev": 0,
+      "datetime_utc": "2026-08-21T03:34:49.040000Z",
+      "notice_type": "BRONZE",
+      "ra_deg": 116.4998,
+      "dec_deg": 10.1106,
+      "err90_arcmin": 30.8,
+      "err50_arcmin": 12.0,
+      "energy": 122.32,
+      "signalness": 0.33822,
+      "far_per_yr": 2.3966,
+      "comments": "IceCube Bronze event.       The position error is statistical only, there is no systematic added.",
+      "detector": "IceCube",
+      "detector_ecef_km": [
+        0.0,
+        0.0,
+        -6356.752
+      ],
+      "source_ecef_unit": [
+        -0.063163,
+        0.982637,
+        0.174457
+      ],
+      "simbad_candidates": [
+        {
+          "name": "Gaia DR3 3149085006570938112",
+          "otype": "*",
+          "sep_arcmin": 2.634898,
+          "ra_deg": 116.47601,
+          "dec_deg": 10.147749
+        },
+        {
+          "name": "TYC  782-243-1",
+          "otype": "Em*",
+          "sep_arcmin": 2.654789,
+          "ra_deg": 116.488771,
+          "dec_deg": 10.153494
+        },
+        {
+          "name": "Gaia DR3 3149080913464790144",
+          "otype": "*",
+          "sep_arcmin": 3.155552,
+          "ra_deg": 116.553211,
+          "dec_deg": 10.111686
+        },
+        {
+          "name": "DA 239",
+          "otype": "Rad",
+          "sep_arcmin": 4.456779,
+          "ra_deg": 116.575,
+          "dec_deg": 10.116667
+        },
+        {
+          "name": "TYC  782-754-1",
+          "otype": "*",
+          "sep_arcmin": 4.774535,
+          "ra_deg": 116.424314,
+          "dec_deg": 10.082153
+        }
+      ],
+      "is_up_going": true,
+      "entry_lat": -69.905847,
+      "entry_lon": 93.677847,
+      "subsource_lat": 10.047076,
+      "subsource_lon": 93.677847
+    },
     {
       "id": "142963_68892416",
       "rev": 1,
