@@ -7,7 +7,7 @@
   --border-strong: rgba(255, 255, 255, .12);
   --ink: #f3f5f8;
   --ink-dim: #c3c9d6;
-  --muted: #6e7689;
+  --muted: #7d8699;
   --muted-strong: #8b93a5;
   --accent: #79d1ff;
   --accent-dim: #1e4258;
@@ -170,6 +170,11 @@ input:focus, select:focus, button:focus-visible {
   outline: none; border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(121,209,255,.14);
 }
+.event:focus-visible, .show-more:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  background: var(--panel);
+}
 
 /* Replace the native dropdown arrow (low-contrast on dark) with a muted
    chevron that matches the small-caps label palette. */
@@ -324,7 +329,7 @@ button.secondary:hover { background: var(--panel-2); color: var(--ink); }
 .map-legend .lg-strip { display: inline-block; width: 22px; height: 6px; border-radius: 2px; border: 1px solid var(--border); }
 .map-legend .lg-strip.gold { background: linear-gradient(to right, #3b4358, var(--gold)); }
 .map-legend .lg-strip.bronze { background: linear-gradient(to right, #3b4358, var(--bronze)); }
-.map-legend .lg-strip.km3 { background: linear-gradient(to right, #3b4358, var(--km3)); }
+.map-legend .lg-strip.km3 { background: var(--km3); }
 .map-legend .lg-hint { margin-top: .25rem; color: var(--muted); font-size: .68rem; }
 
 /* --- Event markers (divIcon, uniform, no fuzz) --- */

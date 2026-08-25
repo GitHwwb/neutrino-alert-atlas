@@ -4,21 +4,21 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Astrophysical Neutrino Alert Atlas</title>
-  <meta name="description" content="Interactive map of public astrophysical neutrino alerts from IceCube and KM3NeT. Each event's sky direction is back-projected through Earth; enter your location to see how close each neutrino's path passed to you. Updated automatically from the NASA GCN feed.">
+  <meta name="description" content="Interactive map of public high-energy neutrino candidate alerts from IceCube and KM3NeT. Each event's sky direction is back-projected through Earth; enter your location to inspect the finite reconstructed trajectory segment.">
   <link rel="canonical" href="https://githwwb.github.io/neutrino-alert-atlas/">
   <meta name="theme-color" content="#07090f">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Astrophysical Neutrino Alert Atlas">
   <meta property="og:title" content="Astrophysical Neutrino Alert Atlas">
-  <meta property="og:description" content="Interactive map of public astrophysical neutrino alerts from IceCube and KM3NeT — sky directions back-projected through Earth, refreshed automatically from the NASA GCN feed.">
+  <meta property="og:description" content="Interactive map of public high-energy neutrino candidate alerts from IceCube and KM3NeT, with reconstructed Earth-entry geometry.">
   <meta property="og:url" content="https://githwwb.github.io/neutrino-alert-atlas/">
   <meta property="og:image" content="https://githwwb.github.io/neutrino-alert-atlas/og-card.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="World map of astrophysical neutrino alert entry points, colored by alert tier and signalness">
+  <meta property="og:image:alt" content="World map of high-energy neutrino candidate trajectories, with IceCube markers colored by alert tier and signalness">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Astrophysical Neutrino Alert Atlas">
-  <meta name="twitter:description" content="Interactive map of public astrophysical neutrino alerts from IceCube and KM3NeT, refreshed automatically from the NASA GCN feed.">
+  <meta name="twitter:description" content="Interactive map of public high-energy neutrino candidate alerts from IceCube and KM3NeT.">
   <meta name="twitter:image" content="https://githwwb.github.io/neutrino-alert-atlas/og-card.png">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2307090f'/%3E%3Ccircle cx='12' cy='19' r='4.5' fill='%23f5cf4e'/%3E%3Ccircle cx='21' cy='11' r='5' fill='none' stroke='%2379d1ff' stroke-width='2.5'/%3E%3C/svg%3E">
   <script type="application/ld+json">
@@ -26,7 +26,7 @@
     "@context": "https://schema.org",
     "@type": "Dataset",
     "name": "Astrophysical Neutrino Alert Atlas",
-    "description": "Public astrophysical neutrino alerts (IceCube Gold/Bronze via NASA GCN, plus hand-curated KM3NeT events) with precomputed Earth-traversal geometry: atmospheric entry points, sub-source points, and source-direction unit vectors.",
+    "description": "Public high-energy neutrino candidate alerts (IceCube Gold/Bronze via NASA GCN, plus a hand-curated KM3NeT event) with precomputed WGS84 Earth-traversal geometry.",
     "url": "https://githwwb.github.io/neutrino-alert-atlas/",
     "creator": { "@type": "Person", "name": "Jonathan Lopes" },
     "isBasedOn": "https://gcn.gsfc.nasa.gov/amon_icecube_gold_bronze_events.html",
@@ -53,10 +53,10 @@
       <h1>Astrophysical Neutrino <span class="accent">Alert Atlas</span></h1>
     </div>
     <p class="lede">
-      A browseable view of public astrophysical neutrino alerts from operating
+      A browsable view of public high-energy neutrino candidate alerts from operating
       high-energy neutrino telescopes. Each event's reconstructed sky direction
-      is back-projected through Earth to an atmospheric entry point, with
-      optional closest-approach distance from any observer location.
+      is back-projected to its atmospheric entry point, with optional distance
+      from any observer location to the finite entry-to-detector segment.
     </p>
     <div id="statStrip" class="stat-strip" hidden></div>
   </header>
@@ -74,7 +74,7 @@
       <button id="useGps" type="button">Use my location</button>
       <button id="resetView" type="button" class="secondary">Reset map</button>
     </div>
-    <div id="status" class="status"></div>
+    <div id="status" class="status" role="status" aria-live="polite"></div>
   </section>
 
   <section id="map-controls">
@@ -101,17 +101,17 @@
   </section>
 
   <section id="map-section">
-    <div id="map"></div>
+    <div id="map" role="region" aria-label="Neutrino alert world map"></div>
   </section>
 
-  <section id="details" hidden>
+  <section id="details" aria-labelledby="detailsTitle" hidden>
     <button id="closeDetails" type="button" aria-label="Close">×</button>
     <h2 id="detailsTitle"></h2>
     <dl id="detailsBody" class="kv"></dl>
     <div id="simbadWrap" hidden>
-      <h3 class="subhead">Source candidates within 90% error region</h3>
+      <h3 class="subhead">Nearby SIMBAD objects within 90% localization region</h3>
       <ul id="simbadList" class="simbad"></ul>
-      <p id="simbadEmpty" class="meta" hidden>No SIMBAD objects within the error radius.</p>
+      <p id="simbadEmpty" class="meta" hidden>No cataloged SIMBAD objects fall within the 90% localization region.</p>
     </div>
     <div id="detailsLinks" class="links"></div>
     <div id="aladinWrap" hidden>
@@ -134,7 +134,7 @@
             <option value="date">Most recent</option>
             <option value="distance">Closest to observer</option>
             <option value="signalness">Highest signalness</option>
-            <option value="energy">Highest energy</option>
+            <option value="energy">Highest reported energy</option>
             <option value="far">Lowest false-alarm rate</option>
           </select>
         </label>
@@ -150,11 +150,12 @@
       <br>
       <span class="dot ring"></span> <strong>Down-going event</strong> — hollow ring at the sub-source point (source was at zenith here at event time; the neutrino did not traverse Earth's interior).
       <br>
-      Marker color intensity encodes <strong>signalness</strong>, the alert pipeline's estimated probability the event is astrophysical:
+      Gold and Bronze marker intensity encodes <strong>IceCube signalness</strong>, the alert pipeline's model probability that the candidate is astrophysical:
       <span class="grad-strip gold"></span> Gold &nbsp;·&nbsp;
-      <span class="grad-strip bronze"></span> Bronze &nbsp;·&nbsp;
-      <span class="grad-strip km3net"></span> KM3NeT
+      <span class="grad-strip bronze"></span> Bronze
       &nbsp; (left = low signalness, right = high signalness).
+      <span class="grad-strip km3net"></span> KM3NeT uses fixed cyan because the
+      cited paper does not publish an IceCube-comparable signalness.
       Cyan detector pins on the map mark the operating high-energy neutrino telescopes worldwide.
     </p>
 
@@ -167,7 +168,7 @@
         Lake Baikal.
       </p>
       <p>
-        Of these, only IceCube currently publishes a structured public alert
+        Of these, only IceCube currently publishes a structured public candidate-alert
         catalog. Its Gold and Bronze alerts go to the NASA GCN AMON feed as a
         machine-readable table updated within minutes of detection — that's
         the source this Atlas ingests.
@@ -195,9 +196,10 @@
     <details class="explainer">
       <summary>Why do most entry points cluster in the southern hemisphere?</summary>
       <p>
-        An up-going neutrino's atmospheric entry latitude is a deterministic function of the source declination:
-        <code class="formula">entry_lat = arcsin(2·sin²(δ) − 1)</code>.
-        So δ = 0° maps to the south pole, δ = 45° maps to the equator, δ = 90° maps to the north pole.
+        At the South Pole, source declination largely determines the latitude
+        where an up-going trajectory enters Earth. The Atlas computes that
+        intersection directly on the WGS84 ellipsoid from each event's
+        Earth-fixed source vector rather than using a spherical approximation.
       </p>
       <p>
         The IceCube alert population skews to low-to-mid northern declinations (≈ 0°–30°) because two effects compete: sources at <em>negative</em> declination appear down-going at the South Pole and don't enter the up-going filter; sources at high <em>positive</em> declination require the neutrino to cross more of Earth's diameter, where absorption at PeV energies cuts the effective area. The sweet spot for through-Earth detection is near the celestial equator. Mapped back through the geometry, that puts the entry points between roughly −90° and −30° latitude.
@@ -207,21 +209,23 @@
     <details class="explainer">
       <summary>How does IceCube tell a down-going neutrino from cosmic-ray background?</summary>
       <p>
-        IceCube is a cubic kilometer of Antarctic ice instrumented with 5,160 light sensors. When a neutrino interacts with a molecule in the ice it produces a charged particle (a muon, electron, or tau) that travels faster than light moves through ice, creating a faint blue Cherenkov glow. The sensors time those photons; from that pattern, IceCube reconstructs the particle's track and energy.
+        IceCube is a cubic kilometer of Antarctic ice instrumented with 5,160 light sensors. When a neutrino interacts with a molecule in the ice it produces a charged particle that travels faster than light moves through ice, creating a faint blue Cherenkov glow. The sensors time those photons; from that pattern, IceCube reconstructs the particle's track and energy.
       </p>
       <p>
         <strong>Up-going events are easy.</strong> If something is moving upward through the detector it had to come from below — through the entire Earth. Earth absorbs essentially everything except neutrinos. So any high-energy track going up is almost certainly a neutrino.
       </p>
       <p>
-        <strong>Down-going events are hard.</strong> Cosmic rays slam into the upper atmosphere above Antarctica all the time, producing a constant rain of muons that look superficially similar to neutrino tracks. IceCube separates the rare down-going astrophysical neutrinos from this huge background by:
+        <strong>Down-going candidates are hard.</strong> Cosmic rays slam into the upper atmosphere above Antarctica all the time, producing a constant rain of muons that look superficially similar to neutrino tracks. IceCube separates candidate neutrino tracks from this huge background using event topology, containment, and energy-dependent background estimates.
       </p>
       <ul>
-        <li><strong>Vetoing the outer ice.</strong> If a track enters from outside the detector, it's probably a cosmic-ray muon — only those come from outside. Real neutrinos can interact anywhere, so the interesting candidates are tracks that <em>start</em> inside the instrumented volume.</li>
-        <li><strong>Looking at energy.</strong> Atmospheric muons mostly arrive at modest energies; astrophysical neutrinos in this catalog are at TeV–PeV, where the background falls off sharply.</li>
-        <li><strong>Looking at shape.</strong> Electron- and tau-flavor neutrinos produce roughly spherical "cascade" light patterns, which are very different from the long straight tracks made by atmospheric muons.</li>
+        <li><strong>Using containment and veto information.</strong> Light recorded before the reconstructed track reaches the detector can identify an entering atmospheric muon.</li>
+        <li><strong>Looking at energy.</strong> Atmospheric backgrounds fall steeply with energy, so a high-energy track is less background-like.</li>
+        <li><strong>Reconstructing track quality.</strong> Timing and spatial consistency across the detector constrain the direction and reject poorly reconstructed backgrounds.</li>
       </ul>
       <p>
-        Gold/Bronze alerts are the ones that survive these cuts and meet thresholds for signalness and false-alarm rate, so they can be circulated to follow-up telescopes within minutes.
+        Gold/Bronze candidate alerts meet the pipeline's signalness and
+        false-alarm-rate thresholds, so they can be circulated to follow-up
+        telescopes within minutes. They are not confirmations of astrophysical origin.
       </p>
     </details>
 
@@ -265,16 +269,27 @@
 
     <ul class="caveats">
       <li>
-        Catalog scope: <strong>≈ 50 events / year, globally</strong> — public Gold and Bronze alerts of likely-astrophysical TeV–PeV neutrinos. This is not a per-location detection rate.
+        Catalog scope: <strong>public IceCube Gold/Bronze candidate alerts since
+        June 2019, plus one hand-curated KM3NeT event</strong>. The observed
+        IceCube rate in this catalog is roughly 27 active candidates per year,
+        not a per-location detection rate.
       </li>
       <li>
-        Closest-approach distance is a <strong>geometric reconstruction</strong>: the perpendicular distance from the observer's ECEF position to the line connecting the reconstructed source direction and the detector. It is not a measurement at the observer's location.
+        Closest-approach distance is a <strong>geometric reconstruction</strong>:
+        the shortest distance from the observer's WGS84 position to the finite
+        atmospheric-entry-to-detector segment. It is not a measurement at the
+        observer's location.
       </li>
       <li>
-        Direction uncertainty (typically &lt; 1° for track-like events, &gt; 5° for cascades) means the trajectory is a corridor, not a line. Closest-approach values smaller than a few hundred kilometers are inside the cascade uncertainty.
+        Direction uncertainty means the trajectory is a corridor, not an exact
+        line. Use each event's listed 90% localization radius when interpreting
+        a closest-approach value; the catalog contains track alerts, not a
+        uniform angular-resolution class.
       </li>
       <li>
-        IceCube is sensitive to TeV–PeV astrophysical neutrinos. The ~10<sup>14</sup> solar and atmospheric neutrinos per cm² per second traversing every observer are real but lie outside this catalog.
+        IceCube's alert stream targets high-energy candidates. Solar neutrino
+        flux at Earth is of order 10<sup>11</sup> per cm² per second, but those
+        much lower-energy neutrinos lie outside this catalog.
       </li>
     </ul>
     <p class="source">
@@ -296,6 +311,7 @@
           integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <!-- No cache-busting: GitHub Pages serves max-age=600 + ETag, so updates
        propagate within 10 minutes and revalidation is a near-free 304. -->
+  <script src="geometry.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

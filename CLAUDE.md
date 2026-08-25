@@ -1,9 +1,8 @@
 # Astrophysical Neutrino Alert Atlas — project guide
 
-Static site visualizing public astrophysical neutrino alerts on a Leaflet world
-map. You enter an observer location; each event's reconstructed sky direction is
-back-projected through Earth to an atmospheric entry point, and the
-closest-approach distance from the line-of-sight to the observer is computed.
+Static site visualizing public high-energy neutrino candidate alerts on a
+Leaflet world map. Observer distance is computed from a WGS84 position to the
+finite atmospheric-entry-to-detector trajectory segment.
 Independent project — not affiliated with any experimental collaboration.
 
 ## Run it
@@ -15,8 +14,8 @@ Independent project — not affiliated with any experimental collaboration.
 python3 -m http.server -d web 8765
 ```
 
-Python pipeline uses the venv at `.venv/` (astropy, astroquery, beautifulsoup4,
-certifi, numpy, pillow, scipy). Use `.venv/bin/python` directly.
+Python pipeline uses the Python 3.12 venv at `.venv/`. Use `.venv/bin/python`
+directly.
 
 ## Layout
 
@@ -28,10 +27,11 @@ scripts/
   requirements.txt
   agm_src/               # gitignored cache: source figures, coastline geojson, --debug QA renders
 web/
-  index.html  app.js  style.css
+  index.html  geometry.js  app.js  style.css
   data/  events.json + agm2015_{all,reactor,geological}.webp
 .github/workflows/update-events.yml   # cron, every 3h, re-runs fetch_events.py
 .github/workflows/pages.yml           # deploys web/ to GitHub Pages on push to main
+tests/                                # Python contracts + Node geometry tests
 ```
 
 ## Stack
@@ -40,9 +40,10 @@ Vanilla HTML/CSS/JS (no framework, no build step). Leaflet 1.9.4 + CartoDB
 Voyager raster tiles. Aladin Lite v3 (lazy-loaded sky view in the details
 panel). Fonts: Geist (sans), Instrument Serif (H1), JetBrains Mono (IDs).
 
-Catalog: 182 events — 181 IceCube Gold/Bronze scraped from GCN, plus 1
-hand-curated KM3-230213A (KM3NeT/ARCA, 220 PeV, Aiello et al. 2025 Nature
-638:376) in `HAND_CURATED_EVENTS` in `fetch_events.py`.
+Catalog counts are generated data and must not be hardcoded in project
+instructions. IceCube records come from GCN; KM3-230213A is hand-curated from
+Aiello et al. 2025, Nature 638:376. KM3NeT has no IceCube-comparable
+signalness/FAR, so those values remain null.
 
 ## AGM2015 overlay
 
@@ -64,10 +65,15 @@ Pacific and kept visible by design.
 
 ## Notes
 
-- Geometry verified against an NYC observer (distances 8000–11500 km, sensible).
-- GCN scraping keeps the highest-revision row per event.
-- SIMBAD lookups are cached; the details panel embeds Aladin Lite.
+- Geometry is regression-tested in `tests/test_geometry.js`; never replace the
+  finite segment with an infinite line.
+- GCN scraping keeps the highest revision and records zero-valued latest
+  revisions as excluded rather than reviving stale metrics.
+- Only successful SIMBAD lookups are cached; proximity means nearby catalog
+  object, not physical source association.
 - AGM overlay registration confirmed via the `--debug` coastline QA pass.
-- Markers are uniform-sized; signalness is encoded by color intensity, not size.
+- IceCube markers encode signalness by color intensity; KM3NeT uses fixed cyan.
 - Map constraints, timeline playback, filters, and reset are wired in `app.js`;
   layout is responsive down to 320px.
+- Scheduled updates deploy directly and verify the served artifact because
+  `GITHUB_TOKEN` pushes do not trigger the separate Pages workflow.

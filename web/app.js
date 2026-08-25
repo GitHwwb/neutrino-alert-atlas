@@ -3,7 +3,7 @@
 // and DOM updates only.
 
 const DATA_URL = "data/events.json";
-const EARTH_RADIUS_KM = 6371.0;
+const { geodeticToEcef, distancePointToSegment } = window.NeutrinoGeometry;
 
 const els = {
   lat: document.getElementById("lat"),
@@ -168,7 +168,7 @@ legendControl.onAdd = () => {
           <span class="lg-tier"><i class="lg-strip bronze"></i>Bronze</span>
           <span class="lg-tier"><i class="lg-strip km3"></i>KM3NeT</span>
         </div>
-        <div class="lg-hint">muted → vivid = signalness</div>
+        <div class="lg-hint">Gold/Bronze: muted → vivid = IceCube signalness; KM3NeT = fixed cyan</div>
       </div>
     </details>`;
   L.DomEvent.disableClickPropagation(div);
@@ -178,24 +178,9 @@ legendControl.onAdd = () => {
 legendControl.addTo(map);
 
 // --- Math ---
-function latLonToECEF(latDeg, lonDeg, radiusKm = EARTH_RADIUS_KM) {
-  const lat = (latDeg * Math.PI) / 180;
-  const lon = (lonDeg * Math.PI) / 180;
-  return [
-    radiusKm * Math.cos(lat) * Math.cos(lon),
-    radiusKm * Math.cos(lat) * Math.sin(lon),
-    radiusKm * Math.sin(lat),
-  ];
-}
-const sub = (a, b) => [a[0]-b[0], a[1]-b[1], a[2]-b[2]];
-const crossp = (a, b) => [
-  a[1]*b[2] - a[2]*b[1],
-  a[2]*b[0] - a[0]*b[2],
-  a[0]*b[1] - a[1]*b[0],
-];
-const norm = (a) => Math.hypot(a[0], a[1], a[2]);
-function closestApproachKm(observerEcef, icecubeEcef, sourceUnit) {
-  return norm(crossp(sub(observerEcef, icecubeEcef), sourceUnit));
+function closestApproachKm(observerEcef, detectorEcef, entryEcef) {
+  if (!Array.isArray(entryEcef)) return null;
+  return distancePointToSegment(observerEcef, detectorEcef, entryEcef);
 }
 
 // --- Formatting ---
@@ -222,15 +207,21 @@ function formatEnergy(tev) {
   if (tev >= 1e3) return `${(tev / 1e3).toPrecision(3)} PeV`;
   return `${tev.toPrecision(3)} TeV`;
 }
+function formatSignalness(value) {
+  return Number.isFinite(value) ? `${(value * 100).toFixed(0)}%` : "not published";
+}
+function formatFar(value, digits = 2) {
+  return Number.isFinite(value) ? `${value.toFixed(digits)}/yr` : "not published";
+}
 
 // --- Marker helpers ---
 function markerLatLon(e) {
   return e.is_up_going ? [e.entry_lat, e.entry_lon] : [e.subsource_lat, e.subsource_lon];
 }
 // Base hue per alert tier. Markers are drawn at a single uniform size; the
-// per-event color is interpolated between a muted slate and the tier color
-// by signalness, so a confident astrophysical candidate reads as vivid gold,
-// bronze, or KM3NeT-cyan while a low-signalness one sits muted near the bg.
+// IceCube color is interpolated between muted slate and its tier color by
+// signalness. KM3NeT stays fixed cyan because its paper does not publish an
+// IceCube-comparable signalness.
 const TIER_BASE = { GOLD: "#f5cf4e", BRONZE: "#cf8a44", KM3NET: "#6ad1ff" };
 const MUTED_LOW = "#3c4760";
 
@@ -248,7 +239,10 @@ function mixHex(a, b, t) {
 }
 
 function eventColor(e) {
-  const sig = Math.max(0, Math.min(1, e.signalness));
+  if (e.notice_type === "KM3NET") return TIER_BASE.KM3NET;
+  const sig = Number.isFinite(e.signalness)
+    ? Math.max(0, Math.min(1, e.signalness))
+    : 0;
   const base = TIER_BASE[e.notice_type] || TIER_BASE.BRONZE;
   // 15% mix at sig=0 (heavily muted), 100% at sig=1 (full tier color).
   return mixHex(MUTED_LOW, base, 0.15 + 0.85 * sig);
@@ -256,7 +250,9 @@ function eventColor(e) {
 
 function buildMarker(e) {
   const color = eventColor(e);
-  const sig = Math.max(0, Math.min(1, e.signalness));
+  const sig = Number.isFinite(e.signalness)
+    ? Math.max(0, Math.min(1, e.signalness))
+    : null;
   const [lat, lon] = markerLatLon(e);
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
 
@@ -273,11 +269,21 @@ function buildMarker(e) {
     iconSize: [totalPx, totalPx],
     iconAnchor: [totalPx / 2, totalPx / 2],
   });
-  const m = L.marker([lat, lon], { icon, riseOnHover: true, bubblingMouseEvents: false });
+  const markerLabel =
+    `${shortDate(e.datetime_utc)} ${e.notice_type} ` +
+    `${e.is_up_going ? "up-going" : "down-going"} candidate alert`;
+  const m = L.marker([lat, lon], {
+    icon,
+    riseOnHover: true,
+    bubblingMouseEvents: false,
+    keyboard: false,
+    title: markerLabel,
+    alt: markerLabel,
+  });
   m.bindTooltip(
     `${shortDate(e.datetime_utc)} · ${e.notice_type} · ` +
       `${e.is_up_going ? "up-going" : "down-going"} · ` +
-      `sig ${(sig * 100).toFixed(0)}%`,
+      `sig ${formatSignalness(sig)}`,
     { direction: "top", offset: [0, -12] },
   );
   m.on("click", () => focusEvent(e.id));
@@ -354,18 +360,40 @@ function detectorAnchor(e) {
   // IceCube for older events that pre-date the multi-detector field.
   return e.detector_ecef_km || state.payload.icecube_ecef_km;
 }
+function detectorLatLon(e) {
+  if (Number.isFinite(e.detector_lat) && Number.isFinite(e.detector_lon)) {
+    return [e.detector_lat, e.detector_lon];
+  }
+  return ICECUBE_LATLNG;
+}
 
 function annotateWithDistance(events) {
   if (!state.observer) return events.map((e) => ({ event: e, distanceKm: null }));
-  const obs = latLonToECEF(state.observer.lat, state.observer.lon);
+  const obs = geodeticToEcef(state.observer.lat, state.observer.lon);
   return events.map((e) => ({
     event: e,
-    distanceKm: closestApproachKm(obs, detectorAnchor(e), e.source_ecef_unit),
+    distanceKm: closestApproachKm(obs, detectorAnchor(e), e.entry_ecef_km),
   }));
 }
 
 function sortRanked(ranked) {
   const by = state.sortBy;
+  const nullableDescending = (field) => (a, b) => {
+    const left = a.event[field];
+    const right = b.event[field];
+    if (!Number.isFinite(left) && !Number.isFinite(right)) return 0;
+    if (!Number.isFinite(left)) return 1;
+    if (!Number.isFinite(right)) return -1;
+    return right - left;
+  };
+  const nullableAscending = (field) => (a, b) => {
+    const left = a.event[field];
+    const right = b.event[field];
+    if (!Number.isFinite(left) && !Number.isFinite(right)) return 0;
+    if (!Number.isFinite(left)) return 1;
+    if (!Number.isFinite(right)) return -1;
+    return left - right;
+  };
   const cmp = {
     date: (a, b) => b.event.datetime_utc.localeCompare(a.event.datetime_utc),
     distance: (a, b) => {
@@ -374,9 +402,9 @@ function sortRanked(ranked) {
       if (b.distanceKm == null) return -1;
       return a.distanceKm - b.distanceKm;
     },
-    signalness: (a, b) => b.event.signalness - a.event.signalness,
-    energy: (a, b) => b.event.energy - a.event.energy,
-    far: (a, b) => a.event.far_per_yr - b.event.far_per_yr,
+    signalness: nullableDescending("signalness"),
+    energy: nullableDescending("energy"),
+    far: nullableAscending("far_per_yr"),
   }[by] || ((a, b) => 0);
   return ranked.slice().sort(cmp);
 }
@@ -401,7 +429,7 @@ function renderResults(ranked) {
     date: "most recent",
     distance: "closest approach to observer",
     signalness: "highest signalness",
-    energy: "highest reconstructed energy",
+    energy: "highest reported energy estimate",
     far: "lowest false-alarm rate",
   }[state.sortBy] || state.sortBy;
   const distHint =
@@ -429,9 +457,9 @@ function renderResults(ranked) {
         <div class="meta">
           RA ${e.ra_deg.toFixed(2)}° · Dec ${e.dec_deg.toFixed(2)}° ·
           σ<sub>90</sub> ${e.err90_arcmin.toFixed(0)}′ ·
-          sig ${(e.signalness * 100).toFixed(0)}% ·
+          sig ${formatSignalness(e.signalness)} ·
           E ${formatEnergy(e.energy)} ·
-          FAR ${e.far_per_yr.toFixed(2)}/yr ·
+          FAR ${formatFar(e.far_per_yr)} ·
           ${e.is_up_going ? "up-going" : "down-going"}
         </div>
       </div>
@@ -518,7 +546,7 @@ function drawTrajectory(event) {
   const color = eventColor(event);
   if (event.is_up_going) {
     state.trajectoryLayer = L.polyline(
-      [[event.entry_lat, event.entry_lon], ICECUBE_LATLNG],
+      [[event.entry_lat, event.entry_lon], detectorLatLon(event)],
       { color, weight: 2.5, opacity: .9, dashArray: "5 5" },
     ).addTo(map);
   } else {
@@ -536,7 +564,11 @@ function drawTrajectory(event) {
 function showDetails(event) {
   const obs = state.observer;
   const distStr = obs
-    ? formatDistance(closestApproachKm(latLonToECEF(obs.lat, obs.lon), detectorAnchor(event), event.source_ecef_unit))
+    ? formatDistance(closestApproachKm(
+        geodeticToEcef(obs.lat, obs.lon),
+        detectorAnchor(event),
+        event.entry_ecef_km,
+      ))
     : null;
   const fov = Math.max(2, (event.err90_arcmin / 60) * 6).toFixed(2);
   const aladinAppUrl = `https://aladin.cds.unistra.fr/AladinLite/?target=${event.ra_deg}+${event.dec_deg}&fov=${fov}&survey=P%2FDSS2%2Fcolor`;
@@ -546,7 +578,7 @@ function showDetails(event) {
   const detectorName = event.detector || "IceCube";
   els.detailsTitle.innerHTML =
     `<span class="badge ${event.notice_type}">${event.notice_type}</span> ` +
-    `${detectorName} alert ${esc(event.id)}`;
+    `${detectorName} candidate alert ${esc(event.id)}`;
 
   els.detailsBody.innerHTML = `
     <dt>Detector</dt>
@@ -561,24 +593,34 @@ function showDetails(event) {
       90% radius ${event.err90_arcmin.toFixed(1)}′ (${(event.err90_arcmin / 60).toFixed(2)}°),
       50% radius ${event.err50_arcmin.toFixed(1)}′
     </dd>
-    <dt>Reconstructed energy</dt>
+    <dt>Reported energy estimate</dt>
     <dd>${formatEnergy(event.energy)}</dd>
+    <dt>Energy basis</dt>
+    <dd>${esc(event.energy_basis || "See source notice")}</dd>
     <dt>Signalness</dt>
-    <dd>${(event.signalness * 100).toFixed(1)}% probability of astrophysical origin</dd>
+    <dd>${
+      Number.isFinite(event.signalness)
+        ? `${(event.signalness * 100).toFixed(1)}% under the IceCube alert model`
+        : "Not published in IceCube-alert terms"
+    }</dd>
     <dt>False-alarm rate</dt>
-    <dd>${event.far_per_yr.toFixed(3)} per year</dd>
+    <dd>${
+      Number.isFinite(event.far_per_yr)
+        ? `${event.far_per_yr.toFixed(3)} per year`
+        : "Not published in IceCube-alert terms"
+    }</dd>
     <dt>Earth traversal</dt>
     <dd>${
       event.is_up_going
-        ? `Up-going: entered atmosphere near ${event.entry_lat.toFixed(2)}°, ${event.entry_lon.toFixed(2)}° and traveled through Earth's interior to IceCube`
-        : "Down-going: arrived from above IceCube's horizon, no significant Earth traversal"
+        ? `Up-going: entered atmosphere near ${event.entry_lat.toFixed(2)}°, ${event.entry_lon.toFixed(2)}° and traveled through Earth's interior to ${esc(detectorName)}`
+        : `Down-going: arrived from above ${esc(detectorName)}'s horizon, no significant Earth traversal`
     }</dd>
     <dt>Comments</dt>
     <dd class="wrap">${esc(event.comments || "—")}</dd>
   `;
 
-  // SIMBAD candidates (populated server-side; field may not be present yet during
-  // the first SIMBAD-enabled rebuild — gracefully hide in that case).
+  // Nearby SIMBAD objects are populated server-side. Gracefully hide this
+  // section for payloads that predate the lookup field.
   renderSimbad(event);
 
   // IceCube GCN notice URL only exists for IceCube events with run/event IDs;
@@ -611,14 +653,21 @@ function showDetails(event) {
 }
 
 function renderSimbad(event) {
-  const cands = event.simbad_candidates;
-  if (!Array.isArray(cands)) {
+  const lookup = event.simbad_lookup;
+  if (!lookup || !Array.isArray(lookup.candidates)) {
     els.simbadWrap.hidden = true;
     return;
   }
   els.simbadWrap.hidden = false;
   els.simbadList.innerHTML = "";
+  if (lookup.status === "error") {
+    els.simbadEmpty.textContent = "SIMBAD lookup was unavailable when this catalog was generated.";
+    els.simbadEmpty.hidden = false;
+    return;
+  }
+  const cands = lookup.candidates;
   if (cands.length === 0) {
+    els.simbadEmpty.textContent = "No cataloged SIMBAD objects fall within the 90% localization region.";
     els.simbadEmpty.hidden = false;
     return;
   }
@@ -648,7 +697,7 @@ function renderStatStrip() {
     `${state.timelineMin.toISOString().slice(0, 4)}–${state.timelineMax.toISOString().slice(0, 4)}`,
     detectors.join(" + "),
     `latest alert ${state.timelineMax.toISOString().slice(0, 10)}`,
-    "refreshed every 3 h",
+    "source checked every 3 h",
   ];
   strip.innerHTML = items
     .map((s) => `<span class="stat">${s}</span>`)
@@ -692,13 +741,13 @@ function embedAladin(event) {
   aladin.addOverlay(errorOverlay);
   errorOverlay.add(window.A.circle(event.ra_deg, event.dec_deg, event.err90_arcmin / 60));
 
-  // SIMBAD candidate sources within the error region.
-  const candidates = (event.simbad_candidates || []).filter(
+  // Nearby SIMBAD catalog objects within the localization region.
+  const candidates = (event.simbad_lookup?.candidates || []).filter(
     (c) => Number.isFinite(c.ra_deg) && Number.isFinite(c.dec_deg),
   );
   if (candidates.length > 0) {
     const cat = window.A.catalog({
-      name: "SIMBAD candidates",
+      name: "Nearby SIMBAD objects",
       sourceSize: 14,
       shape: "circle",
       color: "#f472b6",
@@ -860,8 +909,9 @@ function reportClosest(obs) {
   const ranked = state.events
     .filter(passesFilters)
     .map((e) => closestApproachKm(
-      latLonToECEF(obs.lat, obs.lon), detectorAnchor(e), e.source_ecef_unit,
+      geodeticToEcef(obs.lat, obs.lon), detectorAnchor(e), e.entry_ecef_km,
     ))
+    .filter(Number.isFinite)
     .sort((a, b) => a - b);
   if (ranked.length) {
     els.status.textContent = `Closest event (under current filters) passed ${formatDistance(ranked[0])} from you.`;

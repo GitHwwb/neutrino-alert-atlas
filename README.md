@@ -1,39 +1,40 @@
 # Astrophysical Neutrino Alert Atlas
 
-A static visualization of public astrophysical neutrino alerts from operating
-high-energy neutrino telescopes. Currently ingests IceCube Gold/Bronze alerts
-from NASA GCN plus a hand-curated entry for KM3-230213A (KM3NeT/ARCA); the
-geometry pipeline is detector-agnostic.
+A static visualization of public high-energy neutrino candidate alerts.
+Currently ingests IceCube Gold/Bronze alerts from NASA GCN plus a hand-curated
+entry for KM3-230213A (KM3NeT/ARCA); the geometry pipeline is
+detector-agnostic.
 
 ## How it works
 
-IceCube publishes Gold/Bronze alerts for likely-astrophysical TeV–PeV neutrinos
+IceCube publishes Gold/Bronze candidate alerts for TeV–PeV neutrinos
 on the [GCN AMON page](https://gcn.gsfc.nasa.gov/amon_icecube_gold_bronze_events.html).
 Each alert has a sky direction (RA, Dec) and an arrival time.
 
 For each event, a GitHub Actions cron job runs `scripts/fetch_events.py`,
 which:
 
-1. Scrapes the GCN table and keeps the latest revision of each event.
+1. Scrapes the GCN table, keeps the latest revision of each event, and excludes
+   revisions whose alert metrics were zeroed by the source.
 2. Uses astropy to convert (RA, Dec, UTC time) into a unit vector in the
    Earth-fixed (ITRS/ECEF) frame at the event time. That vector is the
    direction the neutrino arrived from, in Earth coordinates.
-3. Writes everything to `web/data/events.json`.
+3. Intersects the incoming ray with the WGS84 ellipsoid and validates the
+   complete payload before atomically replacing `web/data/events.json`.
 
 The frontend loads that JSON and, given your latitude/longitude, computes the
-perpendicular distance from your ECEF position to the line between the source
-direction and the detector. Pure 3D vector arithmetic — no astropy in the
-browser.
+shortest distance from your WGS84 position to the finite atmospheric-entry to
+detector segment. Pure vector arithmetic runs in the browser; Astropy remains
+in the data pipeline.
 
 ## What this is, and isn't
 
-- **Is**: a geometric reconstruction of where each of ~50 events/year passed,
-  with a closest-approach distance to your location.
-- **Isn't**: a real-time "neutrino just passed through you" counter (~10¹⁴
-  solar/atmospheric neutrinos per cm² per second pass through everything; that
-  framing isn't a meaningful event). And it's not a measurement at your
-  location — the detector is at the South Pole, and direction errors mean the
-  line is a corridor, not a hair.
+- **Is**: a geometric reconstruction of candidate-alert directions, with a
+  closest-approach distance to your location.
+- **Isn't**: confirmation that every alert is astrophysical, a measurement at
+  your location, or a real-time count of the much larger low-energy neutrino
+  flux passing through Earth. Direction uncertainty makes each trajectory a
+  corridor rather than an exact line.
 
 ## Project layout
 
@@ -43,35 +44,53 @@ scripts/
   requirements.txt
 web/
   index.html             # static page
+  geometry.js            # tested WGS84 + finite-segment browser math
   app.js                 # ranking + map
   style.css
   data/events.json       # generated; committed by the workflow
 .github/workflows/
-  update-events.yml      # cron, runs every 3 hours
+  update-events.yml      # cron: test, update, deploy, verify
+  pages.yml              # deploy tested site changes on pushes to main
+tests/
+  test_geometry.js       # browser-math regressions
+  test_*.py              # pipeline and page-contract regressions
 ```
 
 ## Running locally
 
 ```bash
-python3 -m venv .venv
-.venv/bin/pip install -r scripts/requirements.txt
+python3.12 -m venv .venv
+.venv/bin/python -m pip install -r scripts/requirements.txt
 .venv/bin/python scripts/fetch_events.py
 # then serve web/ with any static server:
 python3 -m http.server -d web 8000
 # open http://localhost:8000
 ```
 
+Run the complete automated suite:
+
+```bash
+.venv/bin/python -m unittest discover -s tests -p "test_*.py" -v
+node --test tests/test_geometry.js
+node --check web/geometry.js
+node --check web/app.js
+.venv/bin/python scripts/fetch_events.py --validate-only
+```
+
 ## Deploy
 
-Cloudflare Pages: point at this repo, build output directory `web`, no build
-command. The cron in `.github/workflows/update-events.yml` keeps
-`web/data/events.json` fresh by committing back to the repo, which triggers
-a new Pages deploy automatically.
+GitHub Pages serves `web/`. Human pushes to `main` run `pages.yml`. The
+three-hour `update-events.yml` schedule tests and validates the catalog, commits
+only substantive data changes, deploys the validated working-tree artifact
+directly, and verifies the served generation timestamp. It does not depend on a
+bot-authored push starting a second workflow.
 
 ## Data attribution
 
-- Events: NASA GCN/AMON IceCube Gold and Bronze alerts; KM3-230213A from
-  Aiello et al. 2025, Nature 638:376.
+- Events: NASA GCN/AMON IceCube Gold and Bronze candidate alerts;
+  KM3-230213A from Aiello et al. 2025, Nature 638:376. KM3NeT signalness and
+  false-alarm rate are left unavailable because the paper does not publish
+  IceCube-comparable values.
 - Map tiles: © OpenStreetMap contributors, © CARTO.
 - AGM2015 antineutrino-flux overlays: derived (cropped + reprojected) from the
   figures in [ultralytics/agm2015](https://github.com/ultralytics/agm2015)
