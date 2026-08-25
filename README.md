@@ -5,6 +5,8 @@ Currently ingests IceCube Gold/Bronze alerts from NASA GCN plus a hand-curated
 entry for KM3-230213A (KM3NeT/ARCA); the geometry pipeline is
 detector-agnostic.
 
+https://githwwb.github.io/neutrino-alert-atlas/
+
 ## How it works
 
 IceCube publishes Gold/Bronze candidate alerts for TeV–PeV neutrinos
