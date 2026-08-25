@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-08-25T03:41:24.518041Z",
+  "generated_at_utc": "2026-08-25T12:32:13.901288Z",
   "source_url": "https://gcn.gsfc.nasa.gov/amon_icecube_gold_bronze_events.html",
   "earth_model": "WGS84",
   "icecube_ecef_km": [
@@ -7,7 +7,7 @@
     0.0,
     -6354.802314
   ],
-  "event_count": 189,
+  "event_count": 190,
   "excluded_events": [
     {
       "id": "141456_888784",
@@ -21,6 +21,85 @@
     }
   ],
   "events": [
+    {
+      "id": "143033_44905242",
+      "rev": 0,
+      "datetime_utc": "2026-08-25T10:53:33.630000Z",
+      "notice_type": "BRONZE",
+      "ra_deg": 91.8799,
+      "dec_deg": 45.7899,
+      "err90_arcmin": 30.8,
+      "err50_arcmin": 12.0,
+      "energy": 115.88,
+      "signalness": 0.43823,
+      "far_per_yr": 0.5733,
+      "comments": "IceCube Bronze event.       The position error is statistical only, there is no systematic added.",
+      "detector": "IceCube",
+      "detector_lat": -90.0,
+      "detector_lon": 0.0,
+      "detector_ecef_km": [
+        0.0,
+        0.0,
+        -6354.802314
+      ],
+      "energy_basis": "Most-probable neutrino energy under the IceCube alert pipeline's E^-2.19 astrophysical-flux model",
+      "metrics_source": "NASA GCN AMON IceCube Gold/Bronze notice",
+      "source_ecef_unit": [
+        0.495336,
+        -0.490865,
+        0.716724
+      ],
+      "simbad_lookup": {
+        "status": "ok",
+        "candidates": [
+          {
+            "name": "TYC 3374-298-1",
+            "otype": "*",
+            "sep_arcmin": 0.915542,
+            "ra_deg": 91.877605,
+            "dec_deg": 45.805075
+          },
+          {
+            "name": "ATO J091.8598+45.7677",
+            "otype": "*",
+            "sep_arcmin": 1.570481,
+            "ra_deg": 91.859811,
+            "dec_deg": 45.767791
+          },
+          {
+            "name": "[EHV2002] 1-6-0868",
+            "otype": "V*",
+            "sep_arcmin": 1.661415,
+            "ra_deg": 91.874167,
+            "dec_deg": 45.7625
+          },
+          {
+            "name": "2MASS J06073631+4548482",
+            "otype": "*",
+            "sep_arcmin": 1.671172,
+            "ra_deg": 91.90128,
+            "dec_deg": 45.813429
+          },
+          {
+            "name": "2MASS J06072704+4549450",
+            "otype": "*",
+            "sep_arcmin": 2.464461,
+            "ra_deg": 91.862694,
+            "dec_deg": 45.829184
+          }
+        ]
+      },
+      "is_up_going": true,
+      "entry_lat": 1.784717,
+      "entry_lon": -44.74021,
+      "entry_ecef_km": [
+        4528.243815,
+        -4487.365031,
+        197.312539
+      ],
+      "subsource_lat": 45.784676,
+      "subsource_lon": -44.74021
+    },
     {
       "id": "143020_51776820",
       "rev": 2,
