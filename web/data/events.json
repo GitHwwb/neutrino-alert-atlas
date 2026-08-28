@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-08-25T15:34:42.586255Z",
+  "generated_at_utc": "2026-08-28T00:10:41.805246Z",
   "source_url": "https://gcn.gsfc.nasa.gov/amon_icecube_gold_bronze_events.html",
   "earth_model": "WGS84",
   "icecube_ecef_km": [
@@ -7,7 +7,7 @@
     0.0,
     -6354.802314
   ],
-  "event_count": 190,
+  "event_count": 191,
   "excluded_events": [
     {
       "id": "141456_888784",
@@ -21,6 +21,85 @@
     }
   ],
   "events": [
+    {
+      "id": "143048_12474624",
+      "rev": 1,
+      "datetime_utc": "2026-08-27T15:35:36.960000Z",
+      "notice_type": "GOLD",
+      "ra_deg": 86.31,
+      "dec_deg": 8.1199,
+      "err90_arcmin": 28.73,
+      "err50_arcmin": 14.81,
+      "energy": 191.91,
+      "signalness": 0.51535,
+      "far_per_yr": 1.134,
+      "comments": "IceCube Gold event.       The position error is statistical only, there is no systematic added.",
+      "detector": "IceCube",
+      "detector_lat": -90.0,
+      "detector_lon": 0.0,
+      "detector_ecef_km": [
+        0.0,
+        0.0,
+        -6354.802314
+      ],
+      "energy_basis": "Most-probable neutrino energy under the IceCube alert pipeline's E^-2.19 astrophysical-flux model",
+      "metrics_source": "NASA GCN AMON IceCube Gold/Bronze notice",
+      "source_ecef_unit": [
+        -0.54088,
+        -0.829118,
+        0.141465
+      ],
+      "simbad_lookup": {
+        "status": "ok",
+        "candidates": [
+          {
+            "name": "2MASS J05451058+0809202",
+            "otype": "*",
+            "sep_arcmin": 2.343473,
+            "ra_deg": 86.294103,
+            "dec_deg": 8.155647
+          },
+          {
+            "name": "Gaia DR3 3335220780281371136",
+            "otype": "Pu*",
+            "sep_arcmin": 3.499929,
+            "ra_deg": 86.251531,
+            "dec_deg": 8.11268
+          },
+          {
+            "name": "UCAC4 491-015155",
+            "otype": "*",
+            "sep_arcmin": 3.547919,
+            "ra_deg": 86.251682,
+            "dec_deg": 8.13269
+          },
+          {
+            "name": "Gaia DR3 3335222906287847936",
+            "otype": "AGN",
+            "sep_arcmin": 3.571258,
+            "ra_deg": 86.300405,
+            "dec_deg": 8.178658
+          },
+          {
+            "name": "2MASS J05451977+0811206",
+            "otype": "*",
+            "sep_arcmin": 4.356022,
+            "ra_deg": 86.332384,
+            "dec_deg": 8.189036
+          }
+        ]
+      },
+      "is_up_going": true,
+      "entry_lat": -73.611249,
+      "entry_lon": -123.118682,
+      "entry_ecef_km": [
+        -986.305931,
+        -1511.912424,
+        -6096.838217
+      ],
+      "subsource_lat": 8.132625,
+      "subsource_lon": -123.118682
+    },
     {
       "id": "143033_44905242",
       "rev": 1,
