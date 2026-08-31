@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-08-28T00:10:41.805246Z",
+  "generated_at_utc": "2026-08-31T02:40:03.015309Z",
   "source_url": "https://gcn.gsfc.nasa.gov/amon_icecube_gold_bronze_events.html",
   "earth_model": "WGS84",
   "icecube_ecef_km": [
@@ -90,15 +90,15 @@
         ]
       },
       "is_up_going": true,
-      "entry_lat": -73.611249,
-      "entry_lon": -123.118682,
+      "entry_lat": -73.61125,
+      "entry_lon": -123.118677,
       "entry_ecef_km": [
-        -986.305931,
-        -1511.912424,
-        -6096.838217
+        -986.305722,
+        -1511.912396,
+        -6096.838258
       ],
-      "subsource_lat": 8.132625,
-      "subsource_lon": -123.118682
+      "subsource_lat": 8.132624,
+      "subsource_lon": -123.118677
     },
     {
       "id": "143033_44905242",
@@ -169,15 +169,15 @@
         ]
       },
       "is_up_going": true,
-      "entry_lat": 1.66401,
-      "entry_lon": -44.67044,
+      "entry_lat": 1.664012,
+      "entry_lon": -44.670435,
       "entry_ecef_km": [
-        4533.990438,
-        -4482.129933,
-        183.971366
+        4533.990798,
+        -4482.129558,
+        183.971612
       ],
-      "subsource_lat": 45.724501,
-      "subsource_lon": -44.67044
+      "subsource_lat": 45.724502,
+      "subsource_lon": -44.670435
     },
     {
       "id": "143020_51776820",
@@ -249,14 +249,14 @@
       },
       "is_up_going": true,
       "entry_lat": -69.922797,
-      "entry_lon": 93.347983,
+      "entry_lon": 93.347988,
       "entry_ecef_km": [
-        -128.247698,
-        2192.271106,
-        -5968.088769
+        -128.247864,
+        2192.27104,
+        -5968.08879
       ],
       "subsource_lat": 9.987249,
-      "subsource_lon": 93.347983
+      "subsource_lon": 93.347988
     },
     {
       "id": "142963_68892416",
@@ -331,7 +331,7 @@
       "entry_lon": -81.239634,
       "entry_ecef_km": [
         27.567137,
-        -178.891298,
+        -178.891299,
         -6354.192101
       ],
       "subsource_lat": 0.19316,
@@ -409,9 +409,9 @@
       "entry_lat": -37.616968,
       "entry_lon": -103.680444,
       "entry_ecef_km": [
-        -1196.366181,
-        -4914.981356,
-        -3871.855402
+        -1196.36618,
+        -4914.981357,
+        -3871.855401
       ],
       "subsource_lat": 26.14399,
       "subsource_lon": -103.680444
