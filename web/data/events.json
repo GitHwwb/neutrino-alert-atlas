@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-09-19T07:41:44.533069Z",
+  "generated_at_utc": "2026-09-19T17:37:33.035232Z",
   "source_url": "https://gcn.gsfc.nasa.gov/amon_icecube_gold_bronze_events.html",
   "earth_model": "WGS84",
   "icecube_ecef_km": [
@@ -23,13 +23,13 @@
   "events": [
     {
       "id": "143143_38400235",
-      "rev": 0,
+      "rev": 1,
       "datetime_utc": "2026-09-19T06:52:15.580000Z",
       "notice_type": "GOLD",
-      "ra_deg": 111.0628,
-      "dec_deg": 6.6017,
-      "err90_arcmin": 30.8,
-      "err50_arcmin": 12.0,
+      "ra_deg": 111.0499,
+      "dec_deg": 6.4299,
+      "err90_arcmin": 16.3,
+      "err50_arcmin": 7.68,
       "energy": 302.62,
       "signalness": 0.67035,
       "far_per_yr": 0.5044,
@@ -45,9 +45,9 @@
       "energy_basis": "Most-probable neutrino energy under the IceCube alert pipeline's E^-2.19 astrophysical-flux model",
       "metrics_source": "NASA GCN AMON IceCube Gold/Bronze notice",
       "source_ecef_unit": [
-        0.9779,
-        0.175199,
-        0.114092
+        0.978273,
+        0.175031,
+        0.111113
       ],
       "simbad_lookup": {
         "status": "ok",
@@ -90,15 +90,15 @@
         ]
       },
       "is_up_going": true,
-      "entry_lat": -76.746005,
-      "entry_lon": 10.157238,
+      "entry_lat": -77.085612,
+      "entry_lon": 10.143915,
       "entry_ecef_km": [
-        1443.972887,
-        258.699305,
-        -6186.333579
+        1407.682126,
+        251.859708,
+        -6194.916281
       ],
-      "subsource_lat": 6.551249,
-      "subsource_lon": 10.157238
+      "subsource_lat": 6.379496,
+      "subsource_lon": 10.143915
     },
     {
       "id": "143132_29436198",
