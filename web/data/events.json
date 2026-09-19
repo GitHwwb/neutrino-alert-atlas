@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-09-16T23:27:13.031474Z",
+  "generated_at_utc": "2026-09-19T07:41:44.533069Z",
   "source_url": "https://gcn.gsfc.nasa.gov/amon_icecube_gold_bronze_events.html",
   "earth_model": "WGS84",
   "icecube_ecef_km": [
@@ -7,7 +7,7 @@
     0.0,
     -6354.802314
   ],
-  "event_count": 192,
+  "event_count": 193,
   "excluded_events": [
     {
       "id": "141456_888784",
@@ -21,6 +21,85 @@
     }
   ],
   "events": [
+    {
+      "id": "143143_38400235",
+      "rev": 0,
+      "datetime_utc": "2026-09-19T06:52:15.580000Z",
+      "notice_type": "GOLD",
+      "ra_deg": 111.0628,
+      "dec_deg": 6.6017,
+      "err90_arcmin": 30.8,
+      "err50_arcmin": 12.0,
+      "energy": 302.62,
+      "signalness": 0.67035,
+      "far_per_yr": 0.5044,
+      "comments": "IceCube Gold event.       The position error is statistical only, there is no systematic added.",
+      "detector": "IceCube",
+      "detector_lat": -90.0,
+      "detector_lon": 0.0,
+      "detector_ecef_km": [
+        0.0,
+        0.0,
+        -6354.802314
+      ],
+      "energy_basis": "Most-probable neutrino energy under the IceCube alert pipeline's E^-2.19 astrophysical-flux model",
+      "metrics_source": "NASA GCN AMON IceCube Gold/Bronze notice",
+      "source_ecef_unit": [
+        0.9779,
+        0.175199,
+        0.114092
+      ],
+      "simbad_lookup": {
+        "status": "ok",
+        "candidates": [
+          {
+            "name": "TYC  177-2819-1",
+            "otype": "*",
+            "sep_arcmin": 0.726653,
+            "ra_deg": 111.070486,
+            "dec_deg": 6.611101
+          },
+          {
+            "name": "ATO J111.0378+06.5885",
+            "otype": "EB*",
+            "sep_arcmin": 1.68238,
+            "ra_deg": 111.037888,
+            "dec_deg": 6.588517
+          },
+          {
+            "name": "Gaia DR3 3142468725413806464",
+            "otype": "EB*",
+            "sep_arcmin": 1.994416,
+            "ra_deg": 111.088924,
+            "dec_deg": 6.580928
+          },
+          {
+            "name": "TYC  177-2253-2",
+            "otype": "*",
+            "sep_arcmin": 4.254295,
+            "ra_deg": 111.000938,
+            "dec_deg": 6.637075
+          },
+          {
+            "name": "TYC  177-2253-1",
+            "otype": "*",
+            "sep_arcmin": 4.254759,
+            "ra_deg": 111.001468,
+            "dec_deg": 6.63799
+          }
+        ]
+      },
+      "is_up_going": true,
+      "entry_lat": -76.746005,
+      "entry_lon": 10.157238,
+      "entry_ecef_km": [
+        1443.972887,
+        258.699305,
+        -6186.333579
+      ],
+      "subsource_lat": 6.551249,
+      "subsource_lon": 10.157238
+    },
     {
       "id": "143132_29436198",
       "rev": 1,
