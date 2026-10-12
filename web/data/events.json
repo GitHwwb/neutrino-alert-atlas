@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-10-12T03:34:05.879991Z",
+  "generated_at_utc": "2026-10-12T22:20:10.221040Z",
   "source_url": "https://gcn.gsfc.nasa.gov/amon_icecube_gold_bronze_events.html",
   "earth_model": "WGS84",
   "icecube_ecef_km": [
@@ -7,7 +7,7 @@
     0.0,
     -6354.802314
   ],
-  "event_count": 194,
+  "event_count": 195,
   "excluded_events": [
     {
       "id": "141456_888784",
@@ -21,6 +21,85 @@
     }
   ],
   "events": [
+    {
+      "id": "143283_53121260",
+      "rev": 1,
+      "datetime_utc": "2026-10-12T16:58:11.460000Z",
+      "notice_type": "GOLD",
+      "ra_deg": 177.71,
+      "dec_deg": 8.9499,
+      "err90_arcmin": 26.71,
+      "err50_arcmin": 14.54,
+      "energy": 242.21,
+      "signalness": 0.60968,
+      "far_per_yr": 0.7647,
+      "comments": "IceCube Gold event.       The position error is statistical only, there is no systematic added.",
+      "detector": "IceCube",
+      "detector_lat": -90.0,
+      "detector_lon": 0.0,
+      "detector_ecef_km": [
+        0.0,
+        0.0,
+        -6354.802314
+      ],
+      "energy_basis": "Most-probable neutrino energy under the IceCube alert pipeline's E^-2.19 astrophysical-flux model",
+      "metrics_source": "NASA GCN AMON IceCube Gold/Bronze notice",
+      "source_ecef_unit": [
+        -0.133772,
+        -0.979128,
+        0.153017
+      ],
+      "simbad_lookup": {
+        "status": "ok",
+        "candidates": [
+          {
+            "name": "DES J115043.24+085924.8",
+            "otype": "GiC",
+            "sep_arcmin": 2.996923,
+            "ra_deg": 177.68018,
+            "dec_deg": 8.99024
+          },
+          {
+            "name": "DES J115047.73+085957.8",
+            "otype": "GiC",
+            "sep_arcmin": 3.042467,
+            "ra_deg": 177.698913,
+            "dec_deg": 8.999411
+          },
+          {
+            "name": "DES J115047.28+090002.7",
+            "otype": "GiC",
+            "sep_arcmin": 3.148069,
+            "ra_deg": 177.697021,
+            "dec_deg": 9.000777
+          },
+          {
+            "name": "DES J115044.13+085948.1",
+            "otype": "GiC",
+            "sep_arcmin": 3.206409,
+            "ra_deg": 177.683887,
+            "dec_deg": 8.996703
+          },
+          {
+            "name": "DES J115042.32+085945.0",
+            "otype": "GiC",
+            "sep_arcmin": 3.402481,
+            "ra_deg": 177.676363,
+            "dec_deg": 8.995855
+          }
+        ]
+      },
+      "is_up_going": true,
+      "entry_lat": -72.281513,
+      "entry_lon": -97.779792,
+      "entry_ecef_km": [
+        -263.564295,
+        -1929.126116,
+        -6053.320133
+      ],
+      "subsource_lat": 8.80182,
+      "subsource_lon": -97.779792
+    },
     {
       "id": "143213_36103697",
       "rev": 1,
