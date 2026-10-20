@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-10-19T02:37:35.080000Z",
+  "generated_at_utc": "2026-10-20T08:04:08.074306Z",
   "source_url": "https://gcn.gsfc.nasa.gov/amon_icecube_gold_bronze_events.html",
   "earth_model": "WGS84",
   "icecube_ecef_km": [
@@ -7,7 +7,7 @@
     0.0,
     -6354.802314
   ],
-  "event_count": 195,
+  "event_count": 196,
   "excluded_events": [
     {
       "id": "141456_888784",
@@ -21,6 +21,85 @@
     }
   ],
   "events": [
+    {
+      "id": "143317_9424183",
+      "rev": 0,
+      "datetime_utc": "2026-10-20T03:58:53.390000Z",
+      "notice_type": "BRONZE",
+      "ra_deg": 224.1576,
+      "dec_deg": 20.6133,
+      "err90_arcmin": 30.8,
+      "err50_arcmin": 12.0,
+      "energy": 115.56,
+      "signalness": 0.37984,
+      "far_per_yr": 2.1081,
+      "comments": "IceCube Bronze event.       The position error is statistical only, there is no systematic added.",
+      "detector": "IceCube",
+      "detector_lat": -90.0,
+      "detector_lon": 0.0,
+      "detector_ecef_km": [
+        0.0,
+        0.0,
+        -6354.802314
+      ],
+      "energy_basis": "Most-probable neutrino energy under the IceCube alert pipeline's E^-2.19 astrophysical-flux model",
+      "metrics_source": "NASA GCN AMON IceCube Gold/Bronze notice",
+      "source_ecef_unit": [
+        -0.674902,
+        0.649449,
+        0.350318
+      ],
+      "simbad_lookup": {
+        "status": "ok",
+        "candidates": [
+          {
+            "name": "LEDA 1631597",
+            "otype": "G",
+            "sep_arcmin": 0.944513,
+            "ra_deg": 224.16556,
+            "dec_deg": 20.599433
+          },
+          {
+            "name": "ZTF J145646.33+203619.7",
+            "otype": "dS*",
+            "sep_arcmin": 2.046648,
+            "ra_deg": 224.193062,
+            "dec_deg": 20.605437
+          },
+          {
+            "name": "SDSS J145631.89+204101.0",
+            "otype": "BiC",
+            "sep_arcmin": 4.442338,
+            "ra_deg": 224.132878,
+            "dec_deg": 20.683632
+          },
+          {
+            "name": "TYC 1491-86-1",
+            "otype": "*",
+            "sep_arcmin": 4.624726,
+            "ra_deg": 224.207888,
+            "dec_deg": 20.552268
+          },
+          {
+            "name": "HD 132110",
+            "otype": "*",
+            "sep_arcmin": 5.297676,
+            "ra_deg": 224.233031,
+            "dec_deg": 20.560294
+          }
+        ]
+      },
+      "is_up_going": true,
+      "entry_lat": -48.908528,
+      "entry_lon": 136.101058,
+      "entry_ecef_km": [
+        -3026.445472,
+        2912.305948,
+        -4783.878837
+      ],
+      "subsource_lat": 20.506796,
+      "subsource_lon": 136.101058
+    },
     {
       "id": "143283_53121260",
       "rev": 1,
