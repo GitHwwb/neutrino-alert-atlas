@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-11-02T10:22:09.636069Z",
+  "generated_at_utc": "2026-11-09T10:42:48.391679Z",
   "source_url": "https://gcn.gsfc.nasa.gov/amon_icecube_gold_bronze_events.html",
   "earth_model": "WGS84",
   "icecube_ecef_km": [
@@ -173,7 +173,7 @@
       "entry_lon": -97.779787,
       "entry_ecef_km": [
         -263.564093,
-        -1929.12607,
+        -1929.126071,
         -6053.320156
       ],
       "subsource_lat": 8.801819,
