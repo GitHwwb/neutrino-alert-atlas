@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-11-13T21:06:48.813951Z",
+  "generated_at_utc": "2026-11-14T19:37:57.868500Z",
   "source_url": "https://gcn.gsfc.nasa.gov/amon_icecube_gold_bronze_events.html",
   "earth_model": "WGS84",
   "icecube_ecef_km": [
@@ -23,13 +23,13 @@
   "events": [
     {
       "id": "143479_9218586",
-      "rev": 0,
+      "rev": 1,
       "datetime_utc": "2026-11-13T16:48:28.480000Z",
       "notice_type": "GOLD",
-      "ra_deg": 165.1324,
-      "dec_deg": -14.8206,
-      "err90_arcmin": 30.8,
-      "err50_arcmin": 12.0,
+      "ra_deg": 165.4499,
+      "dec_deg": -14.9399,
+      "err90_arcmin": 11.35,
+      "err50_arcmin": 5.3,
       "energy": 7906.8,
       "signalness": 0.40179,
       "far_per_yr": 0.2215,
@@ -45,9 +45,9 @@
       "energy_basis": "Most-probable neutrino energy under the IceCube alert pipeline's E^-2.19 astrophysical-flux model",
       "metrics_source": "NASA GCN AMON IceCube Gold/Bronze notice",
       "source_ecef_unit": [
-        -0.734297,
-        -0.627809,
-        -0.258195
+        -0.730396,
+        -0.631516,
+        -0.260209
       ],
       "simbad_lookup": {
         "status": "error",
@@ -55,15 +55,15 @@
         "message": "Unable to access the capabilities endpoint at:\n- https://simbad.cds.unistra.fr/simbad/sim-tap/capabilities: 404 Not Found\n- https://simbad.cds.unistra.fr/simbad/capabilities: 404 Not Found\n\nThis could mean:\n1. The service URL is incorrect\n2. The service is temporarily unavailable\n3. The service doesn't support this protocol\n4. If a 503 was encountered, retry after the suggested delay.\n"
       },
       "is_up_going": false,
-      "entry_lat": -89.934814,
-      "entry_lon": -139.470216,
+      "entry_lat": -89.935353,
+      "entry_lon": -139.152621,
       "entry_ecef_km": [
-        -5.533953,
-        -4.73142,
-        -6356.748172
+        -5.462133,
+        -4.722674,
+        -6356.748241
       ],
-      "subsource_lat": -14.962965,
-      "subsource_lon": -139.470216
+      "subsource_lat": -15.082479,
+      "subsource_lon": -139.152621
     },
     {
       "id": "143317_9424183",
