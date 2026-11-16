@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-11-14T19:37:57.868500Z",
+  "generated_at_utc": "2026-11-16T10:25:53.324429Z",
   "source_url": "https://gcn.gsfc.nasa.gov/amon_icecube_gold_bronze_events.html",
   "earth_model": "WGS84",
   "icecube_ecef_km": [
@@ -56,14 +56,14 @@
       },
       "is_up_going": false,
       "entry_lat": -89.935353,
-      "entry_lon": -139.152621,
+      "entry_lon": -139.152619,
       "entry_ecef_km": [
-        -5.462133,
+        -5.462132,
         -4.722674,
         -6356.748241
       ],
-      "subsource_lat": -15.082479,
-      "subsource_lon": -139.152621
+      "subsource_lat": -15.08248,
+      "subsource_lon": -139.152619
     },
     {
       "id": "143317_9424183",
@@ -137,9 +137,9 @@
       "entry_lat": -48.895257,
       "entry_lon": 136.063471,
       "entry_ecef_km": [
-        -3025.335147,
-        2915.062354,
-        -4782.908752
+        -3025.335142,
+        2915.062357,
+        -4782.908753
       ],
       "subsource_lat": 20.513425,
       "subsource_lon": 136.063471
@@ -296,7 +296,7 @@
       "entry_lon": -144.04108,
       "entry_ecef_km": [
         -230.919036,
-        -167.519673,
+        -167.519672,
         -6350.390411
       ],
       "subsource_lat": 0.886009,
@@ -374,9 +374,9 @@
       "entry_lat": -77.085608,
       "entry_lon": 10.143913,
       "entry_ecef_km": [
-        1407.682558,
-        251.859727,
-        -6194.916183
+        1407.68256,
+        251.859725,
+        -6194.916182
       ],
       "subsource_lat": 6.379498,
       "subsource_lon": 10.143913
@@ -453,8 +453,8 @@
       "entry_lat": -81.59061,
       "entry_lon": -102.623803,
       "entry_ecef_km": [
-        -204.527035,
-        -913.219106,
+        -204.527038,
+        -913.219102,
         -6287.95376
       ],
       "subsource_lat": 4.085781,
