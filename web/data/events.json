@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-11-16T10:25:53.324429Z",
+  "generated_at_utc": "2026-11-17T05:58:54.291764Z",
   "source_url": "https://gcn.gsfc.nasa.gov/amon_icecube_gold_bronze_events.html",
   "earth_model": "WGS84",
   "icecube_ecef_km": [
@@ -52,7 +52,7 @@
       "simbad_lookup": {
         "status": "error",
         "candidates": [],
-        "message": "Unable to access the capabilities endpoint at:\n- https://simbad.cds.unistra.fr/simbad/sim-tap/capabilities: 404 Not Found\n- https://simbad.cds.unistra.fr/simbad/capabilities: 404 Not Found\n\nThis could mean:\n1. The service URL is incorrect\n2. The service is temporarily unavailable\n3. The service doesn't support this protocol\n4. If a 503 was encountered, retry after the suggested delay.\n"
+        "message": "Unable to access the capabilities endpoint at:\n- https://simbad.cds.unistra.fr/simbad/sim-tap/capabilities: Connection failed (Possible causes: incorrect URL, DNS issue, or service is down)\n\nThis could mean:\n1. The service URL is incorrect\n2. The service is temporarily unavailable\n3. The service doesn't support this protocol\n4. If a 503 was encountered, retry after the suggested delay.\n"
       },
       "is_up_going": false,
       "entry_lat": -89.935353,
