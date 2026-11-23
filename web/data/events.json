@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-11-22T10:38:24.230948Z",
+  "generated_at_utc": "2026-11-23T11:34:43.951517Z",
   "source_url": "https://gcn.gsfc.nasa.gov/amon_icecube_gold_bronze_events.html",
   "earth_model": "WGS84",
   "icecube_ecef_km": [
@@ -7,7 +7,7 @@
     0.0,
     -6354.802314
   ],
-  "event_count": 197,
+  "event_count": 198,
   "excluded_events": [
     {
       "id": "141456_888784",
@@ -21,6 +21,50 @@
     }
   ],
   "events": [
+    {
+      "id": "143530_34667334",
+      "rev": 1,
+      "datetime_utc": "2026-11-23T06:54:16.990000Z",
+      "notice_type": "BRONZE",
+      "ra_deg": 320.4499,
+      "dec_deg": 24.5799,
+      "err90_arcmin": 88.3,
+      "err50_arcmin": 48.01,
+      "energy": 145.04,
+      "signalness": 0.45677,
+      "far_per_yr": 1.2048,
+      "comments": "IceCube Bronze event.       The position error is statistical only, there is no systematic added.",
+      "detector": "IceCube",
+      "detector_lat": -90.0,
+      "detector_lon": 0.0,
+      "detector_ecef_km": [
+        0.0,
+        0.0,
+        -6354.802314
+      ],
+      "energy_basis": "Most-probable neutrino energy under the IceCube alert pipeline's E^-2.19 astrophysical-flux model",
+      "metrics_source": "NASA GCN AMON IceCube Gold/Bronze notice",
+      "source_ecef_unit": [
+        -0.822813,
+        0.385212,
+        0.417841
+      ],
+      "simbad_lookup": {
+        "status": "error",
+        "candidates": [],
+        "message": "Unable to access the capabilities endpoint at:\n- https://simbad.cds.unistra.fr/simbad/sim-tap/capabilities: 404 Not Found\n- https://simbad.cds.unistra.fr/simbad/capabilities: 404 Not Found\n\nThis could mean:\n1. The service URL is incorrect\n2. The service is temporarily unavailable\n3. The service doesn't support this protocol\n4. If a 503 was encountered, retry after the suggested delay.\n"
+      },
+      "is_up_going": true,
+      "entry_lat": -40.513939,
+      "entry_lon": 154.912668,
+      "entry_ecef_km": [
+        -4397.743168,
+        2058.867896,
+        -4121.536768
+      ],
+      "subsource_lat": 24.698378,
+      "subsource_lon": 154.912668
+    },
     {
       "id": "143479_9218586",
       "rev": 1,
@@ -52,18 +96,18 @@
       "simbad_lookup": {
         "status": "error",
         "candidates": [],
-        "message": "Unable to access the capabilities endpoint at:\n- https://simbad.cds.unistra.fr/simbad/sim-tap/capabilities: Connection failed (Possible causes: incorrect URL, DNS issue, or service is down)\n\nThis could mean:\n1. The service URL is incorrect\n2. The service is temporarily unavailable\n3. The service doesn't support this protocol\n4. If a 503 was encountered, retry after the suggested delay.\n"
+        "message": "Unable to access the capabilities endpoint at:\n- https://simbad.cds.unistra.fr/simbad/sim-tap/capabilities: 404 Not Found\n- https://simbad.cds.unistra.fr/simbad/capabilities: 404 Not Found\n\nThis could mean:\n1. The service URL is incorrect\n2. The service is temporarily unavailable\n3. The service doesn't support this protocol\n4. If a 503 was encountered, retry after the suggested delay.\n"
       },
       "is_up_going": false,
       "entry_lat": -89.935353,
-      "entry_lon": -139.152619,
+      "entry_lon": -139.152614,
       "entry_ecef_km": [
         -5.462132,
         -4.722674,
         -6356.748241
       ],
       "subsource_lat": -15.08248,
-      "subsource_lon": -139.152619
+      "subsource_lon": -139.152614
     },
     {
       "id": "143317_9424183",
@@ -138,7 +182,7 @@
       "entry_lon": 136.063471,
       "entry_ecef_km": [
         -3025.335142,
-        2915.062357,
+        2915.062358,
         -4782.908753
       ],
       "subsource_lat": 20.513425,
